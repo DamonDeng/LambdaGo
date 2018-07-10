@@ -46,24 +46,64 @@ class TensorModel(object):
         # shape: [None,19,19,1]
         conv1 = tf.layers.conv2d(
             inputs=reshaped_input_x,
-            filters=32,
+            filters=256,
             kernel_size=[3, 3],
             padding="same",
             activation=tf.nn.relu,
             name = 'conv1')
-        # shape: [None,19,19,32]
+        # shape: [None,19,19,256]
+
+        short_cut = conv1 + reshaped_input_x
+
+        # shape: [None,19,19,257]
+
         conv2 = tf.layers.conv2d(
-            inputs=conv1,
+            inputs=short_cut,
+            filters=256,
+            kernel_size=[3, 3],
+            padding="same",
+            activation=tf.nn.relu,
+            name = 'conv2')
+
+        short_cut = conv2 + short_cut
+        
+        # shape: [None,19,19,257]
+
+        conv3 = tf.layers.conv2d(
+            inputs=short_cut,
+            filters=256,
+            kernel_size=[3, 3],
+            padding="same",
+            activation=tf.nn.relu,
+            name = 'conv3')
+
+        short_cut = conv3 + short_cut
+        
+        # shape: [None,19,19,257]
+
+        conv4 = tf.layers.conv2d(
+            inputs=short_cut,
+            filters=256,
+            kernel_size=[3, 3],
+            padding="same",
+            activation=tf.nn.relu,
+            name = 'conv4')
+
+        short_cut = conv4 + short_cut
+        
+        # shape: [None,19,19,257]
+
+        last_conv = tf.layers.conv2d(
+            inputs=short_cut,
             filters=1,
             kernel_size=[3, 3],
             padding="same",
             activation=tf.nn.tanh,
-            name = 'conv2')
+            name = 'last_conv')
         # shape: [None,19,19,1]
 
-        loss = tf.reduce_mean(tf.squared_difference(conv2, reshaped_input_y))
-        # reduce_1 = tf.reduce_sum(conv2, 0)
-        sum_result = tf.reduce_sum(conv2, [1,2,3])
+        loss = tf.reduce_mean(tf.squared_difference(last_conv, reshaped_input_y))
+        sum_result = tf.reduce_sum(last_conv, [1,2,3])
 
         return sum_result, loss
 
