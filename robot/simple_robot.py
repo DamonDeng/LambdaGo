@@ -57,11 +57,13 @@ class SimpleRobot(object):
             self.board.reset(self.board_size)
             both_pass, board_states, score_board = self.self_play()
             if both_pass:
-                print ('Both PASS: start to train the model')
+                print ('Both PASS: start to train the model, iter:' + str(i))
                 score_board_list = []
                 for i in range(len(board_states)):
                     score_board_list.append(score_board)
                 self.model.train(input_data=board_states, input_data_y=score_board_list, steps=10)
+                print ('Train finished, saving model.....')
+                self.model.save_model('./model/testing_iter'+str(i)+'.mdl')
 
 
 
