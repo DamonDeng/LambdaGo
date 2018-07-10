@@ -54,6 +54,9 @@ class SimpleRobot(object):
     def self_train(self, iter_number = 10):
 
         for i in range(iter_number):
+            # clear the screen while started to train
+            print('\033[H\033[J')
+
             self.board.reset(self.board_size)
             both_pass, board_states, score_board = self.self_play()
             if both_pass:
@@ -79,7 +82,9 @@ class SimpleRobot(object):
         self.board.update_score_board()
         return str(self.board)
 
-    def select_move(self, color):
+
+
+    def simulate_best_move(self, color):
         move_and_result = {}
 
         for row in range(self.board_size):
@@ -99,7 +104,7 @@ class SimpleRobot(object):
         #             print ('Result of :' + str(pos))
         #             print (str(move_and_result[pos]))
     
-        selected_move = None
+        # selected_move = None
 
         all_moves = move_and_result.keys()
 
@@ -108,6 +113,7 @@ class SimpleRobot(object):
         #         selected_move = pos
         #         break
 
+        right_move = (None, -10000)
 
         if len(all_moves) > 0:
             selected_move = all_moves[0]
@@ -124,8 +130,6 @@ class SimpleRobot(object):
             
             move_and_predict.sort(key=lambda x:x[1])
 
-            right_move = (None, -10000)
-
             color_value = self.board.get_color_value(color)
 
             if color_value == self.board.ColorBlack:
@@ -136,10 +140,26 @@ class SimpleRobot(object):
 
             print ('selected move:' + str(right_move[0]) + ' with value:' + str(right_move[1]))
 
-            selected_move = right_move[0]
+
+        return right_move
+
+
+    def select_move(self, color):
+
+        right_move = self.simulate_best_move(color)
+
+        if color == self.ColorBlackChar:
+            if right_move[1] < 0:
+                right_move = self.simulate_best_move(self.ColorWhiteChar)
+        elif color == self.ColorWhiteChar:
+            if right_move[1] > 0:
+                right_move = self.simulate_best_move(self.ColorBlackChar)
+        
+
+        selected_move = right_move[0]
 
         #set the cursor to zero point and clean some space for display:
-        # print('\033[H\033[J')
+        
         print('\x1b[0;0f')
 
 
