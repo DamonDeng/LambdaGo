@@ -139,7 +139,7 @@ class SimpleRobot(object):
             selected_move = right_move[0]
 
         #set the cursor to zero point and clean some space for display:
-        print('\033[H\033[J')
+        # print('\033[H\033[J')
         print('\x1b[0;0f')
 
 
