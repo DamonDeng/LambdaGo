@@ -19,10 +19,169 @@ class GoBoard(object):
         self.review_has_black = 0
 
         self.move_number = 0
-        self.max_move_number = 1024
+        self.max_move_number = 2048
         self.potential_ko = False
         self.ko_remove = (-1, -1)
         self.last_move_pos = (-1, -1)
+
+    def copy_from(self, source_board):
+        self.board_size = source_board.board_size
+        self.board = source_board.board.copy()
+        self.move_number = source_board.move_number
+        self.max_move_number = source_board.max_move_number
+        self.potential_ko = source_board.potential_ko
+        self.ko_remove = source_board.ko_remove
+        self.last_move_pos = source_board.last_move_pos
+
+    def is_empty(self, pos):
+        (row, col) = pos
+        if self.board[row][col] == self.ColorEmpty:
+            return True
+        else:
+            return False
+
+    def is_solid_eye(self, color, pos):
+        if pos is None:
+            return False
+
+        color_value = self.get_color_value(color)
+        (row, col) = pos
+
+        if row < 1:
+            if col < 1:
+                if self.board[row][col + 1] != color_value:
+                    return False
+                elif self.board[row + 1][col] != color_value:
+                    return False
+                elif self.board[row + 1][col + 1] != color_value:
+                    return False
+                else:
+                    return True
+            
+            elif col == self.board_size - 1:
+                if self.board[row][col - 1] != color_value:
+                    return False
+                elif self.board[row + 1][col - 1] != color_value:
+                    return False
+                elif self.board[row + 1][col] != color_value:
+                    return False
+                else:
+                    return True
+
+            else:
+                if self.board[row][col - 1] != color_value:
+                    return False
+                elif self.board[row][col + 1] != color_value:
+                    return False
+                elif self.board[row + 1][col - 1] != color_value:
+                    return False
+                elif self.board[row + 1][col] != color_value:
+                    return False
+                elif self.board[row + 1][col + 1] != color_value:
+                    return False
+                else:
+                    return True
+
+
+        elif row == self.board_size - 1:
+            if col < 1:
+                if self.board[row - 1][col] != color_value:
+                    return False
+                elif self.board[row - 1][col + 1] != color_value:
+                    return False
+                elif self.board[row][col + 1] != color_value:
+                    return False
+                else:
+                    return True
+            
+            elif col == self.board_size - 1:
+
+                if self.board[row - 1][col - 1] != color_value:
+                    return False
+                elif self.board[row - 1][col] != color_value:
+                    return False
+                elif self.board[row][col - 1] != color_value:
+                    return False
+                else:
+                    return True
+
+            else:
+                if self.board[row - 1][col - 1] != color_value:
+                    return False
+                elif self.board[row - 1][col] != color_value:
+                    return False
+                elif self.board[row - 1][col + 1] != color_value:
+                    return False
+                elif self.board[row][col - 1] != color_value:
+                    return False
+                elif self.board[row][col + 1] != color_value:
+                    return False
+                else:
+                    return True
+
+        else:
+            if col < 1:
+                if self.board[row - 1][col] != color_value:
+                    return False
+                elif self.board[row - 1][col + 1] != color_value:
+                    return False
+                elif self.board[row][col + 1] != color_value:
+                    return False
+                elif self.board[row + 1][col] != color_value:
+                    return False
+                elif self.board[row + 1][col + 1] != color_value:
+                    return False
+                else:
+                    return True
+                    
+            
+            elif col == self.board_size - 1:
+
+                if self.board[row - 1][col - 1] != color_value:
+                    return False
+                elif self.board[row - 1][col] != color_value:
+                    return False
+                elif self.board[row][col - 1] != color_value:
+                    return False
+                elif self.board[row + 1][col - 1] != color_value:
+                    return False
+                elif self.board[row + 1][col] != color_value:
+                    return False
+                else:
+                    return True
+                    
+
+            else:
+
+                if self.board[row - 1][col] != color_value:
+                    return False
+                elif self.board[row][col - 1] != color_value:
+                    return False
+                elif self.board[row][col + 1] != color_value:
+                    return False
+                elif self.board[row + 1][col] != color_value:
+                    return False
+                else:
+                    corner_number = 0
+
+                    if self.board[row - 1][col - 1] != color_value:
+                        corner_number = corner_number + 1
+                    
+                    if self.board[row - 1][col + 1] != color_value:
+                        corner_number = corner_number + 1
+                    
+                    if self.board[row + 1][col - 1] != color_value:
+                        corner_number = corner_number + 1
+                    
+                    if self.board[row + 1][col + 1] != color_value:
+                        corner_number = corner_number + 1
+                    
+                    if corner_number > 1:
+                        return False
+                    else:
+                        return True
+                    
+
 
     def apply_move(self, color, pos):
 
@@ -102,7 +261,10 @@ class GoBoard(object):
         if current_move_is_ko == True:
             return False
         else:
-            return True
+            if self.is_solid_eye(color, pos):
+                return False
+            else:
+                return True
 
 
 
@@ -330,6 +492,33 @@ class GoBoard(object):
                 if self.board[i][j] == self.ColorWhite:
                     line = line + '\033[1;32mo\033[0m'
                 if self.board[i][j] == self.ColorEmpty:
+                    line = line + '.'
+
+                line = line + ' '
+
+            line = line + line_number[:4]
+
+            result = result + line + '\n'
+
+        result = result + row_string
+        
+        return result
+
+    def get_score_only_debug_string(self):
+        result = '# GoBoard\n'
+        row_string = '#     A B C D E F G H J K L M N O P Q R S T \n'
+        
+        result =  result + row_string
+        
+        for i in range(self.board_size - 1, -1, -1):
+            line_number = '  ' + str(i+1) + '   '
+            line = '#' + line_number[-5:]
+            for j in range(0, self.board_size):
+                if self.score_board[i][j] == self.ColorBlack:
+                    line = line + '\033[1;31mx\033[0m'
+                if self.score_board[i][j] == self.ColorWhite:
+                    line = line + '\033[1;32mo\033[0m'
+                if self.score_board[i][j] == self.ColorEmpty:
                     line = line + '.'
 
                 line = line + ' '

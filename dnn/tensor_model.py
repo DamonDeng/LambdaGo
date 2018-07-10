@@ -3,7 +3,8 @@ import tensorflow as tf
 
 class TensorModel(object):
 
-    def __init__(self, model_path=None):
+    def __init__(self, board_size=19, model_path=None):
+        self.board_size = board_size
         self.model_path = model_path
 
         if model_path == None:
@@ -38,8 +39,8 @@ class TensorModel(object):
         
     def define_model(self, input_x, input_y):
 
-        reshaped_input_x = tf.reshape(input_x, [-1, 19, 19, 1])
-        reshaped_input_y = tf.reshape(input_y, [-1, 19, 19, 1])
+        reshaped_input_x = tf.reshape(input_x, [-1, self.board_size, self.board_size, 1])
+        reshaped_input_y = tf.reshape(input_y, [-1, self.board_size, self.board_size, 1])
 
 
         # shape: [None,19,19,1]
@@ -61,19 +62,25 @@ class TensorModel(object):
         # shape: [None,19,19,1]
 
         loss = tf.reduce_mean(tf.squared_difference(conv2, reshaped_input_y))
+        # reduce_1 = tf.reduce_sum(conv2, 0)
+        sum_result = tf.reduce_sum(conv2, [1,2,3])
 
-        return conv2, loss
+        return sum_result, loss
 
     def predict(self, input_data):
 
-        if self.is_new_model:
-            return
+        # if self.is_new_model:
+        #     return
 
         
 
         result = self.session.run(self.output, feed_dict={self.input_x:input_data})
 
-        print(result)
+        # print('#' + str(result))
+        # print('# -------------------------------')
+        # print('#' + str(len(result)))
+
+        return result
 
     def train(self, input_data, input_data_y, steps=100):
         
