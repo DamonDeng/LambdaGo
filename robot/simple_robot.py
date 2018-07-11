@@ -94,7 +94,7 @@ class SimpleRobot(object):
     def simulate_best_move(self, color, pos_filter=None):
         move_and_result = {}
 
-        ko_pos = None
+        forbidden_moves = []
 
         for row in range(self.board_size):
             for col in range(self.board_size):
@@ -109,8 +109,10 @@ class SimpleRobot(object):
                         else:
                             move_and_result[(row, col)] = self.simulate_board_list[board_index]
                     else:
-                        if reason == self.board.MoveResult_IsKo:
-                            ko_pos = (row, col)
+                        if reason == self.board.MoveResult_IsKo or \
+                           reason == self.board.MoveResult_IsSuicide or \
+                           reason == self.board.MoveResult_SolidEye:
+                            forbidden_moves.append((row, col))
 
         # debug display of all the moves tried: 
         # for row in range(self.board_size):
@@ -153,22 +155,12 @@ class SimpleRobot(object):
             elif color_value == self.board.ColorWhite:
                 right_move = move_and_predict[-1]
 
-
-            print ('selected move:' + str(right_move[0]) + ' with value:' + str(right_move[1]))
-
-
-        return right_move, ko_pos
+        return right_move, forbidden_moves
 
 
     def select_move(self, color):
 
-        right_move, ko_pos = self.simulate_best_move(color)
-
-        ko_filter = None
-
-        if not ko_pos is None:
-            ko_filter = []
-            ko_filter.append(ko_pos)
+        right_move, forbidden_moves = self.simulate_best_move(color)
 
         if right_move[0] != None:
             # todo, now, pass move from first simulate_bst_move
@@ -177,20 +169,31 @@ class SimpleRobot(object):
             # in the future, if pass can be selected while there is still other move
             # we need to change the following code to check why pass was slected.
 
+            enemy_right_move = None
+
             if color == self.ColorBlackChar:
                 if right_move[1] < self.komi:
-                    right_move, _ = self.simulate_best_move(self.ColorWhiteChar, ko_filter)
+                    enemy_right_move, _ = self.simulate_best_move(self.ColorWhiteChar, forbidden_moves)
             elif color == self.ColorWhiteChar:
                 if right_move[1] > self.komi:
-                    right_move, _ = self.simulate_best_move(self.ColorBlackChar, ko_filter)
+                    enemy_right_move, _ = self.simulate_best_move(self.ColorBlackChar, forbidden_moves)
+
+            if enemy_right_move != None:
+                # need to check with enemy's move, as current side is lossing
+                if enemy_right_move[0] != None:
+                    # there are moves to be selected in enemy's moves
+                    right_move = enemy_right_move
         
 
-        selected_move = right_move[0]
+ 
 
         #set the cursor to zero point and clean some space for display:
         
         print('\x1b[0;0f')
 
+        print ('selected move:' + str(right_move[0]) + ' with value:' + str(right_move[1]))
+
+        selected_move = right_move[0]
 
         if selected_move == None:
             print('GenMove Result: PASS')
