@@ -210,6 +210,7 @@ class SimpleRobot(object):
         else:
             print('Final Result:' + str(selected_move))
             self.board.apply_move(color, selected_move)
+            self.board.update_score_board()
             print(str(self.board))
 
         return selected_move
