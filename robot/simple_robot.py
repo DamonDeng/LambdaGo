@@ -7,7 +7,10 @@ import random
 
 class SimpleRobot(object):
 
-    def __init__(self):
+    def __init__(self, layer_number=19):
+
+        self.layer_number = layer_number
+
         self.board_size = 19
         self.simulate_board_list = []
         self.max_play_move = 1024
@@ -29,7 +32,7 @@ class SimpleRobot(object):
             self.simulate_board_list.append(GoBoard(self.board_size))
 
         self.board = GoBoard(self.board_size)
-        self.model = TensorModel(self.board_size)
+        self.model = TensorModel(self.board_size, layer_number=self.layer_number)
         # self.model.load_model('./model/firstmodel.mdl')
 
     def reset_board(self):
@@ -178,12 +181,14 @@ class SimpleRobot(object):
                 if move_and_predict[0][1] > self.komi:
                     right_move = move_and_predict[0]
                 else:
+                    right_move = move_and_predict[0]
                     best_move_is_lossing = True
                     
             elif color_value == self.board.ColorWhite:
                 if move_and_predict[-1][1] < self.komi:
                     right_move = move_and_predict[-1]
                 else:
+                    right_move = move_and_predict[0]
                     best_move_is_lossing = True
 
         # if not best_move_is_lossing:

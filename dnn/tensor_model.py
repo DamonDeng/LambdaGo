@@ -3,9 +3,10 @@ import tensorflow as tf
 
 class TensorModel(object):
 
-    def __init__(self, board_size=19, model_path=None):
+    def __init__(self, board_size=19, model_path=None, layer_number=19):
         self.board_size = board_size
         self.model_path = model_path
+        self.layer_number = layer_number
 
         if model_path == None:
             self.is_new_model = True
@@ -57,7 +58,7 @@ class TensorModel(object):
 
         # shape: [None,19,19,257]
 
-        for i in range(19):
+        for i in range(self.layer_number):
 
             conv_in = tf.layers.conv2d(
                 inputs=short_cut,
