@@ -27,6 +27,11 @@ class GoBoard(object):
         self.review_has_white = 0
         self.review_has_black = 0
 
+        self.score_board_updated = False
+        self.score_board_sum = 0
+        self.score_board_sum_black = 0
+        self.score_board_sum_white = 0
+
         self.move_number = 0
         self.max_move_number = 2048
         self.potential_ko = False
@@ -41,6 +46,11 @@ class GoBoard(object):
         self.potential_ko = source_board.potential_ko
         self.ko_remove = source_board.ko_remove
         self.last_move_pos = source_board.last_move_pos
+
+        self.score_board_updated = source_board.score_board_updated
+        self.score_board_sum = source_board.score_board_sum
+        self.score_board_sum_black = source_board.score_board_sum_black
+        self.score_board_sum_white = source_board.score_board_sum_white
 
     def is_empty(self, pos):
         (row, col) = pos
@@ -202,7 +212,7 @@ class GoBoard(object):
 
         # apply move to position
         # print('# applying move: ' + color + "  " + str(pos))
-        last_move_number = self.move_number
+        # last_move_number = self.move_number
         cur_move_number = self.move_number + 1
 
         if cur_move_number >= self.max_move_number:
@@ -232,6 +242,11 @@ class GoBoard(object):
             suicide = self.remove_if_dead(row, col)
             if suicide:
                 return False, self.MoveResult_IsSuicide
+
+        # set score board updated to False here, as above action didn't change the board
+        # the action includ:
+        #   PASS, Not_Empty, Suicide
+        self.score_board_updated = False
 
         if up_removed+right_removed+down_removed+left_removed > 1:
             # more than one stones were removed, it could not be a potential_ko
@@ -364,6 +379,20 @@ class GoBoard(object):
 
     def update_score_board(self):
 
+        # handit not supported:
+        if self.move_number == 0:
+            self.score_board_sum = 0
+            self.score_board_sum_black = 0
+            self.score_board_sum_white = 0
+            self.score_board_updated = True
+            return
+        elif self.move_number == 1:
+            self.score_board_sum = 1
+            self.score_board_sum_black = 1
+            self.score_board_sum_white = 0
+            self.score_board_updated = True
+            return
+
         self.score_marker = np.zeros((self.board_size, self.board_size), dtype=int)
 
         for i in range(0, self.board_size):
@@ -371,9 +400,24 @@ class GoBoard(object):
                 if self.board[i][j] == self.ColorBlack or self.board[i][j] == self.ColorWhite:
                     self.score_marker[i][j] = 1
                     self.score_board[i][j] = self.board[i][j]
+                    
                 elif self.board[i][j] == self.ColorEmpty:
                     if self.score_marker[i][j] != 1:
                         self.score_empty_point(i, j)
+
+        self.score_board_sum = 0
+        self.score_board_sum_black = 0
+        self.score_board_sum_white = 0
+        
+        for i in range(0, self.board_size):
+            for j in range(0, self.board_size):
+                self.score_board_sum = self.score_board_sum + self.score_board[i][j]
+                if self.score_board[i][j] == self.ColorBlack:
+                    self.score_board_sum_black = self.score_board_sum_black + 1
+                elif self.score_board[i][j] == self.ColorWhite:
+                    self.score_board_sum_white = self.score_board_sum_white + 1
+        
+        self.score_board_updated = True
 
     def score_empty_point(self, row, col):
 
@@ -388,7 +432,7 @@ class GoBoard(object):
                 if self.review_record[i][j] == 1:
                     self.score_marker[i][j] = 1
                     if self.review_has_black == 1 and self.review_has_white == 1:
-                        self.score_board[i][j] = 0
+                        self.score_board[i][j] = self.ColorEmpty
                     elif self.review_has_black == 1:
                         self.score_board[i][j] = self.ColorBlack
                     elif self.review_has_white == 1:
@@ -572,7 +616,25 @@ class GoBoard(object):
             result = result + line + '\n'
 
         result = result + row_string
+
+        score_string = '#'
+
+        if self.score_board_updated:
+            total_score_string = '          ' + str(self.score_board_sum) + '       '
+            black_score_string = '          ' + str(self.score_board_sum_black) + '       '
+            white_score_string = '          ' + str(self.score_board_sum_white) + '       '
+
+            score_string = score_string + ' Score: ' + total_score_string[-10:]
+            score_string = score_string + ',  Black: ' + black_score_string[-10:]
+            score_string = score_string + ', White: ' + white_score_string[-10:]
+            score_string = score_string + '\n'
+            
+        else:
+
+            score_string = score_string + ' Score: NotCounted,  Black: NotCounted, White: NotCounted\n' 
         
+        result = result + score_string
+
         return result
 
 
