@@ -238,7 +238,7 @@ class SimpleRobot(object):
 
         top_update_end_time = time.time()
 
-        move_and_score = zip(input_pos, predict_result, input_pos)
+        move_and_score = zip(input_pos, predict_result, input_score)
             
         if color_value == self.board.ColorBlack:
             move_and_score.sort(key=lambda x:x[2], reverse=True)
@@ -246,20 +246,31 @@ class SimpleRobot(object):
             move_and_score.sort(key=lambda x:x[2])
         
         top_score = move_and_score[0][2]
+
+        # print ('# top_score:' + str(top_score))
+
         top_number = 1
         for i in range(1, len(move_and_score)):
+            # print ('# move:' + str(i) + ' score:' + str(move_and_score[i][2]))
             if move_and_score[i][2] == top_score:
                 top_number = top_number + 1
             else:
                 break
 
+        # print ('#top_number:' + str(top_number))
+
         random_int = random.randint(0, top_number-1)
+
+        # print ('# random int:' + str(random_int))
         right_move = move_and_score[random_int]
 
         top_end_time = time.time()
 
         print ('top score update time used: ' + str(top_update_end_time - top_start_time))
         print ('top score compute time used: ' + str(top_end_time - top_update_end_time))
+
+        print ('# top score:' + str(top_score) + '        ')
+        print ('# move:' + str(right_move[0]) + ' with score:' + str(right_move[2]) + '    ')
         
 
         return right_move, forbidden_moves
