@@ -186,44 +186,44 @@ class SimpleRobot(object):
                 else:
                     best_move_is_lossing = True
 
-        if not best_move_is_lossing:
-            return right_move, forbidden_moves
+        # if not best_move_is_lossing:
+        return right_move, forbidden_moves
 
 
 
         # prediction tell us that current player is lossing,
         # trying to select move base on board score
 
-        input_score = []
-        input_pos = []
-        for pos in all_moves:
+        # input_score = []
+        # input_pos = []
+        # for pos in all_moves:
 
-            temp_board = move_and_result.get(pos)
+        #     temp_board = move_and_result.get(pos)
           
-            temp_board.update_score_board()
-            input_score.append(temp_board.score_board_sum)
+        #     temp_board.update_score_board()
+        #     input_score.append(temp_board.score_board_sum)
 
-            input_pos.append(pos)
+        #     input_pos.append(pos)
 
-        move_and_score = zip(input_pos, predict_result, input_pos)
+        # move_and_score = zip(input_pos, predict_result, input_pos)
             
-        if color_value == self.board.ColorBlack:
-            move_and_score.sort(key=lambda x:x[2])
-        else:
-            move_and_score.sort(key=lambda x:x[2], reverse=True)
+        # if color_value == self.board.ColorBlack:
+        #     move_and_score.sort(key=lambda x:x[2])
+        # else:
+        #     move_and_score.sort(key=lambda x:x[2], reverse=True)
         
-        top_score = move_and_score[0][2]
-        top_number = 1
-        for i in range(1, len(move_and_score)):
-            if move_and_score[i][2] == top_score:
-                top_number = top_number + 1
-            else:
-                break
+        # top_score = move_and_score[0][2]
+        # top_number = 1
+        # for i in range(1, len(move_and_score)):
+        #     if move_and_score[i][2] == top_score:
+        #         top_number = top_number + 1
+        #     else:
+        #         break
 
-        random_int = random.randint(0, top_number-1)
-        right_move = move_and_score[random_int]
+        # random_int = random.randint(0, top_number-1)
+        # right_move = move_and_score[random_int]
 
-        return right_move, forbidden_moves
+        # return right_move, forbidden_moves
 
 
     def select_move(self, color):
