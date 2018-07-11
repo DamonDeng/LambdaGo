@@ -207,7 +207,10 @@ class SimpleRobot(object):
 
         move_and_score = zip(input_pos, predict_result, input_pos)
             
-        move_and_score.sort(key=lambda x:x[2])
+        if color_value == self.board.ColorBlack:
+            move_and_score.sort(key=lambda x:x[2])
+        else:
+            move_and_score.sort(key=lambda x:x[2], reverse=True)
         
         top_score = move_and_score[0][2]
         top_number = 1
