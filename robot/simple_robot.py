@@ -137,14 +137,20 @@ class SimpleRobot(object):
         if len(all_moves) > 0:
             # selected_move = all_moves[0]
             input_states = []
+            input_score = []
             input_pos = []
             for pos in all_moves:
-                input_states.append(move_and_result.get(pos).board)
+
+                temp_board = move_and_result.get(pos)
+                temp_board.update_score_board()
+
+                input_states.append(temp_board.board)
+                input_score.append(temp_board.score_board_sum)
                 input_pos.append(pos)
 
             predict_result = self.model.predict(input_states)
 
-            move_and_predict = zip(input_pos, predict_result)
+            move_and_predict = zip(input_pos, predict_result, input_score)
 
             
             move_and_predict.sort(key=lambda x:x[1])
@@ -155,13 +161,35 @@ class SimpleRobot(object):
                 if move_and_predict[0][1] > self.komi:
                     right_move = move_and_predict[0]
                 else:
-                    random_int = random.randint(0, len(move_and_predict)-1)
+                    # prediction tell us that current player is lossing,
+                    # trying to select move base on board score
+                    move_and_predict.sort(key=lambda x:x[2])
+                    
+                    top_score = move_and_predict[0][2]
+                    top_number = 1
+                    for i in range(1, len(move_and_predict)):
+                        if move_and_predict[i][2] == top_score:
+                            top_number = top_number + 1
+                        else:
+                            break
+
+                    random_int = random.randint(0, top_number-1)
                     right_move = move_and_predict[random_int]
             elif color_value == self.board.ColorWhite:
                 if move_and_predict[-1][1] < self.komi:
                     right_move = move_and_predict[-1]
                 else:
-                    random_int = random.randint(0, len(move_and_predict)-1)
+                    move_and_predict.sort(key=lambda x:x[2], reverse=True)
+                    
+                    top_score = move_and_predict[0][2]
+                    top_number = 1
+                    for i in range(1, len(move_and_predict)):
+                        if move_and_predict[i][2] == top_score:
+                            top_number = top_number + 1
+                        else:
+                            break
+
+                    random_int = random.randint(0, top_number-1)
                     right_move = move_and_predict[random_int]
 
         return right_move, forbidden_moves
