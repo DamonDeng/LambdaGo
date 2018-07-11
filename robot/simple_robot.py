@@ -16,6 +16,10 @@ class SimpleRobot(object):
 
         self.komi = 7.5
 
+        self.train_iter = 0
+        self.black_win_times = 0
+        self.white_win_times = 0
+
         # use current time as prefix of saved model
         self.prefix = str(time.strftime("%Y_%m_%d_%H_%M",time.localtime(time.time())))
         
@@ -62,18 +66,22 @@ class SimpleRobot(object):
     def self_train(self, iter_number = 10):
 
         for i in range(iter_number):
+
+            
             # clear the screen while started to train
             print('\033[H\033[J')
 
             self.board.reset(self.board_size)
             both_pass, board_states, score_board = self.self_play()
             if both_pass:
-                print ('Both PASS: start to train the model, iter:' + str(i))
+                print ('#  ')
+                print ('#  ')
+                print ('# Both PASS: start to train the model, iter:' + str(i))
                 score_board_list = []
                 for i in range(len(board_states)):
                     score_board_list.append(score_board)
                 self.model.train(input_data=board_states, input_data_y=score_board_list, steps=10)
-                print ('Train finished, saving model.....')
+                print ('# Train finished, saving model.....')
                 self.model.save_model('./model/'+self.prefix+'_'+str(i)+'.mdl')
 
 
@@ -132,25 +140,34 @@ class SimpleRobot(object):
         #         selected_move = pos
         #         break
 
-        right_move = (None, -10000)
+        right_move = (None, 0)
 
-        if len(all_moves) > 0:
+        best_move_is_lossing = False
+
+        if len(all_moves) <= 0:
+            # no available move left, just return PASS, and current score board sum as value
+            if not self.board.score_board_updated:
+                self.board.update_score_board()
+
+            right_move = (None, self.board.score_board_sum)
+
+            return right_move, forbidden_moves
+        else:
             # selected_move = all_moves[0]
             input_states = []
-            input_score = []
             input_pos = []
             for pos in all_moves:
 
                 temp_board = move_and_result.get(pos)
-                temp_board.update_score_board()
+                # temp_board.update_score_board()
 
                 input_states.append(temp_board.board)
-                input_score.append(temp_board.score_board_sum)
+                # input_score.append(temp_board.score_board_sum)
                 input_pos.append(pos)
 
             predict_result = self.model.predict(input_states)
 
-            move_and_predict = zip(input_pos, predict_result, input_score)
+            move_and_predict = zip(input_pos, predict_result)
 
             
             move_and_predict.sort(key=lambda x:x[1])
@@ -161,36 +178,47 @@ class SimpleRobot(object):
                 if move_and_predict[0][1] > self.komi:
                     right_move = move_and_predict[0]
                 else:
-                    # prediction tell us that current player is lossing,
-                    # trying to select move base on board score
-                    move_and_predict.sort(key=lambda x:x[2])
+                    best_move_is_lossing = True
                     
-                    top_score = move_and_predict[0][2]
-                    top_number = 1
-                    for i in range(1, len(move_and_predict)):
-                        if move_and_predict[i][2] == top_score:
-                            top_number = top_number + 1
-                        else:
-                            break
-
-                    random_int = random.randint(0, top_number-1)
-                    right_move = move_and_predict[random_int]
             elif color_value == self.board.ColorWhite:
                 if move_and_predict[-1][1] < self.komi:
                     right_move = move_and_predict[-1]
                 else:
-                    move_and_predict.sort(key=lambda x:x[2], reverse=True)
-                    
-                    top_score = move_and_predict[0][2]
-                    top_number = 1
-                    for i in range(1, len(move_and_predict)):
-                        if move_and_predict[i][2] == top_score:
-                            top_number = top_number + 1
-                        else:
-                            break
+                    best_move_is_lossing = True
 
-                    random_int = random.randint(0, top_number-1)
-                    right_move = move_and_predict[random_int]
+        if not best_move_is_lossing:
+            return right_move, forbidden_moves
+
+
+
+        # prediction tell us that current player is lossing,
+        # trying to select move base on board score
+
+        input_score = []
+        input_pos = []
+        for pos in all_moves:
+
+            temp_board = move_and_result.get(pos)
+          
+            temp_board.update_score_board()
+            input_score.append(temp_board.score_board_sum)
+
+            input_pos.append(pos)
+
+        move_and_score = zip(input_pos, predict_result, input_pos)
+            
+        move_and_score.sort(key=lambda x:x[2])
+        
+        top_score = move_and_score[0][2]
+        top_number = 1
+        for i in range(1, len(move_and_score)):
+            if move_and_score[i][2] == top_score:
+                top_number = top_number + 1
+            else:
+                break
+
+        random_int = random.randint(0, top_number-1)
+        right_move = move_and_score[random_int]
 
         return right_move, forbidden_moves
 
