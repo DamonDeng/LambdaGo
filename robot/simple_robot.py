@@ -170,14 +170,19 @@ class SimpleRobot(object):
             ko_filter = []
             ko_filter.append(ko_pos)
 
-        
+        if right_move[0] != None:
+            # todo, now, pass move from first simulate_bst_move
+            # means that there is no move to be selected.
+            # skip enemy value checking if there is no move to be selected.
+            # in the future, if pass can be selected while there is still other move
+            # we need to change the following code to check why pass was slected.
 
-        if color == self.ColorBlackChar:
-            if right_move[1] < self.komi:
-                right_move, _ = self.simulate_best_move(self.ColorWhiteChar, ko_filter)
-        elif color == self.ColorWhiteChar:
-            if right_move[1] > self.komi:
-                right_move, _ = self.simulate_best_move(self.ColorBlackChar, ko_filter)
+            if color == self.ColorBlackChar:
+                if right_move[1] < self.komi:
+                    right_move, _ = self.simulate_best_move(self.ColorWhiteChar, ko_filter)
+            elif color == self.ColorWhiteChar:
+                if right_move[1] > self.komi:
+                    right_move, _ = self.simulate_best_move(self.ColorBlackChar, ko_filter)
         
 
         selected_move = right_move[0]
