@@ -57,39 +57,17 @@ class TensorModel(object):
 
         # shape: [None,19,19,257]
 
-        conv2 = tf.layers.conv2d(
-            inputs=short_cut,
-            filters=256,
-            kernel_size=[3, 3],
-            padding="same",
-            activation=tf.nn.relu,
-            name = 'conv2')
+        for i in range(19):
 
-        short_cut = conv2 + short_cut
-        
-        # shape: [None,19,19,257]
+            conv_in = tf.layers.conv2d(
+                inputs=short_cut,
+                filters=256,
+                kernel_size=[3, 3],
+                padding="same",
+                activation=tf.nn.relu,
+                name = 'conv_in_'+str(i))
 
-        conv3 = tf.layers.conv2d(
-            inputs=short_cut,
-            filters=256,
-            kernel_size=[3, 3],
-            padding="same",
-            activation=tf.nn.relu,
-            name = 'conv3')
-
-        short_cut = conv3 + short_cut
-        
-        # shape: [None,19,19,257]
-
-        conv4 = tf.layers.conv2d(
-            inputs=short_cut,
-            filters=256,
-            kernel_size=[3, 3],
-            padding="same",
-            activation=tf.nn.relu,
-            name = 'conv4')
-
-        short_cut = conv4 + short_cut
+            short_cut = conv_in + short_cut
         
         # shape: [None,19,19,257]
 
