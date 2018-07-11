@@ -95,7 +95,9 @@ class SimpleRobot(object):
 
         self.board.apply_move(color, pos)
 
-        # print(str(self.board))
+        self.board.update_score_board()
+
+        print(str(self.board))
 
     def showboard(self):
         self.board.update_score_board()

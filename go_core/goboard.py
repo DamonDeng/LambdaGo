@@ -483,10 +483,6 @@ class GoBoard(object):
             return
 
 
-        else:
-            
-            return True
-
 
 
     # convert the color letter to color value
