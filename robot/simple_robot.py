@@ -2,6 +2,7 @@ from go_core.goboard import GoBoard
 from dnn.tensor_model import TensorModel
 
 import time
+import random
 
 
 class SimpleRobot(object):
@@ -151,9 +152,17 @@ class SimpleRobot(object):
             color_value = self.board.get_color_value(color)
 
             if color_value == self.board.ColorBlack:
-                right_move = move_and_predict[0]
+                if move_and_predict[0][1] > self.komi:
+                    right_move = move_and_predict[0]
+                else:
+                    random_int = random.randint(0, len(move_and_predict)-1)
+                    right_move = move_and_predict[random_int]
             elif color_value == self.board.ColorWhite:
-                right_move = move_and_predict[-1]
+                if move_and_predict[-1][1] < self.komi:
+                    right_move = move_and_predict[-1]
+                else:
+                    random_int = random.randint(0, len(move_and_predict)-1)
+                    right_move = move_and_predict[random_int]
 
         return right_move, forbidden_moves
 
@@ -162,27 +171,27 @@ class SimpleRobot(object):
 
         right_move, forbidden_moves = self.simulate_best_move(color)
 
-        if right_move[0] != None:
-            # todo, now, pass move from first simulate_bst_move
-            # means that there is no move to be selected.
-            # skip enemy value checking if there is no move to be selected.
-            # in the future, if pass can be selected while there is still other move
-            # we need to change the following code to check why pass was slected.
+        # if right_move[0] != None:
+        #     # todo, now, pass move from first simulate_bst_move
+        #     # means that there is no move to be selected.
+        #     # skip enemy value checking if there is no move to be selected.
+        #     # in the future, if pass can be selected while there is still other move
+        #     # we need to change the following code to check why pass was slected.
 
-            enemy_right_move = None
+        #     enemy_right_move = None
 
-            if color == self.ColorBlackChar:
-                if right_move[1] < self.komi:
-                    enemy_right_move, _ = self.simulate_best_move(self.ColorWhiteChar, forbidden_moves)
-            elif color == self.ColorWhiteChar:
-                if right_move[1] > self.komi:
-                    enemy_right_move, _ = self.simulate_best_move(self.ColorBlackChar, forbidden_moves)
+        #     if color == self.ColorBlackChar:
+        #         if right_move[1] < self.komi:
+        #             enemy_right_move, _ = self.simulate_best_move(self.ColorWhiteChar, forbidden_moves)
+        #     elif color == self.ColorWhiteChar:
+        #         if right_move[1] > self.komi:
+        #             enemy_right_move, _ = self.simulate_best_move(self.ColorBlackChar, forbidden_moves)
 
-            if enemy_right_move != None:
-                # need to check with enemy's move, as current side is lossing
-                if enemy_right_move[0] != None:
-                    # there are moves to be selected in enemy's moves
-                    right_move = enemy_right_move
+        #     if enemy_right_move != None:
+        #         # need to check with enemy's move, as current side is lossing
+        #         if enemy_right_move[0] != None:
+        #             # there are moves to be selected in enemy's moves
+        #             right_move = enemy_right_move
         
 
  
