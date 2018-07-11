@@ -108,6 +108,9 @@ class SimpleRobot(object):
 
         forbidden_moves = []
 
+        # time debug for prediction
+        start_time = time.time()
+
         for row in range(self.board_size):
             for col in range(self.board_size):
                 if self.board.is_empty((row, col)):
@@ -125,6 +128,10 @@ class SimpleRobot(object):
                            reason == self.board.MoveResult_IsSuicide or \
                            reason == self.board.MoveResult_SolidEye:
                             forbidden_moves.append((row, col))
+
+        # time debug for prediction
+        end_time = time.time()
+        print('# time used for simulation:' + str(end_time - start_time))
 
         # debug display of all the moves tried: 
         # for row in range(self.board_size):
@@ -168,7 +175,14 @@ class SimpleRobot(object):
                 # input_score.append(temp_board.score_board_sum)
                 input_pos.append(pos)
 
+            # time debug for prediction
+            start_time = time.time()
+
             predict_result = self.model.predict(input_states)
+
+            # time debug for prediction
+            end_time = time.time()
+            print('# time used for prediction:' + str(end_time - start_time))
 
             move_and_predict = zip(input_pos, predict_result)
 
@@ -235,6 +249,35 @@ class SimpleRobot(object):
 
         right_move, forbidden_moves = self.simulate_best_move(color)
 
+        return right_move[0]
+
+
+        
+
+ 
+
+    def select_move_and_display(self, color):
+        right_move, forbidden_moves = self.simulate_best_move(color)
+
+        #set the cursor to zero point and clean some space for display:
+        
+        print('\x1b[0;0f')
+
+        print ('selected move:' + str(right_move[0]) + ' with value:' + str(right_move[1]))
+
+        selected_move = right_move[0]
+
+        if selected_move == None:
+            print('GenMove Result: PASS')
+            print(str(self.board))
+        else:
+            print('Final Result:' + str(selected_move))
+            self.board.apply_move(color, selected_move)
+            self.board.update_score_board()
+            print(str(self.board))
+
+        return selected_move
+
         # if right_move[0] != None:
         #     # todo, now, pass move from first simulate_bst_move
         #     # means that there is no move to be selected.
@@ -256,29 +299,6 @@ class SimpleRobot(object):
         #         if enemy_right_move[0] != None:
         #             # there are moves to be selected in enemy's moves
         #             right_move = enemy_right_move
-        
-
- 
-
-        #set the cursor to zero point and clean some space for display:
-        
-        print('\x1b[0;0f')
-
-        print ('selected move:' + str(right_move[0]) + ' with value:' + str(right_move[1]))
-
-        selected_move = right_move[0]
-
-        if selected_move == None:
-            print('GenMove Result: PASS')
-            print(str(self.board))
-        else:
-            print('Final Result:' + str(selected_move))
-            self.board.apply_move(color, selected_move)
-            self.board.update_score_board()
-            print(str(self.board))
-
-        return selected_move
-
 
                     
 
