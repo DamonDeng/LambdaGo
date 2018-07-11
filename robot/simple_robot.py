@@ -45,9 +45,9 @@ class SimpleRobot(object):
         board_states = []
 
         for i in range(self.max_play_move):
-            selected_black_move = self.select_move(self.ColorBlackChar)
+            selected_black_move = self.select_move_and_display(self.ColorBlackChar)
             board_states.append(self.board.board)
-            selected_white_move = self.select_move(self.ColorWhiteChar)
+            selected_white_move = self.select_move_and_display(self.ColorWhiteChar)
             board_states.append(self.board.board)
             if selected_black_move == None and selected_white_move == None:
                 
@@ -187,67 +187,97 @@ class SimpleRobot(object):
             move_and_predict = zip(input_pos, predict_result)
 
             
-            move_and_predict.sort(key=lambda x:x[1])
+            move_and_predict.sort(key=lambda x:x[1], reverse=True)
 
             color_value = self.board.get_color_value(color)
 
             if color_value == self.board.ColorBlack:
+                print ('# black top move:' + str(move_and_predict[0][0]) + ' with value:' + str(move_and_predict[0][1]))
+
                 if move_and_predict[0][1] > self.komi:
                     right_move = move_and_predict[0]
+                    best_move_is_lossing = False
                 else:
                     right_move = move_and_predict[0]
                     best_move_is_lossing = True
                     
             elif color_value == self.board.ColorWhite:
+                print ('# white top move:' + str(move_and_predict[-1][0]) + ' with value:' + str(move_and_predict[-1][1]))
+
                 if move_and_predict[-1][1] < self.komi:
                     right_move = move_and_predict[-1]
+                    best_move_is_lossing = False
                 else:
-                    right_move = move_and_predict[0]
+                    right_move = move_and_predict[-1]
                     best_move_is_lossing = True
 
-        # if not best_move_is_lossing:
-        return right_move, forbidden_moves
+            print ('# right move:' + str(right_move[0]) + ' with value:' + str(right_move[1]))
+
+        if not best_move_is_lossing:
+            print ('# not lossing')
+            return right_move, forbidden_moves
 
 
 
         # prediction tell us that current player is lossing,
         # trying to select move base on board score
 
-        # input_score = []
-        # input_pos = []
-        # for pos in all_moves:
+        top_start_time = time.time()
 
-        #     temp_board = move_and_result.get(pos)
+        input_score = []
+        input_pos = []
+        for pos in all_moves:
+
+            temp_board = move_and_result.get(pos)
           
-        #     temp_board.update_score_board()
-        #     input_score.append(temp_board.score_board_sum)
+            temp_board.update_score_board()
+            input_score.append(temp_board.score_board_sum)
 
-        #     input_pos.append(pos)
+            input_pos.append(pos)
 
-        # move_and_score = zip(input_pos, predict_result, input_pos)
+        top_update_end_time = time.time()
+
+        move_and_score = zip(input_pos, predict_result, input_pos)
             
-        # if color_value == self.board.ColorBlack:
-        #     move_and_score.sort(key=lambda x:x[2])
-        # else:
-        #     move_and_score.sort(key=lambda x:x[2], reverse=True)
+        if color_value == self.board.ColorBlack:
+            move_and_score.sort(key=lambda x:x[2])
+        else:
+            move_and_score.sort(key=lambda x:x[2], reverse=True)
         
-        # top_score = move_and_score[0][2]
-        # top_number = 1
-        # for i in range(1, len(move_and_score)):
-        #     if move_and_score[i][2] == top_score:
-        #         top_number = top_number + 1
-        #     else:
-        #         break
+        top_score = move_and_score[0][2]
+        top_number = 1
+        for i in range(1, len(move_and_score)):
+            if move_and_score[i][2] == top_score:
+                top_number = top_number + 1
+            else:
+                break
 
-        # random_int = random.randint(0, top_number-1)
-        # right_move = move_and_score[random_int]
+        random_int = random.randint(0, top_number-1)
+        right_move = move_and_score[random_int]
 
-        # return right_move, forbidden_moves
+        top_end_time = time.time()
+
+        print ('top score update time used: ' + str(top_update_end_time - top_start_time))
+        print ('top score compute time used: ' + str(top_end_time - top_update_end_time))
+        
+
+        return right_move, forbidden_moves
 
 
     def select_move(self, color):
 
         right_move, forbidden_moves = self.simulate_best_move(color)
+
+        selected_move = right_move[0]
+
+        if selected_move == None:
+            print('GenMove Result: PASS')
+            print(str(self.board))
+        else:
+            print('Final Result:' + str(selected_move))
+            self.board.apply_move(color, selected_move)
+            self.board.update_score_board()
+            print(str(self.board))
 
         return right_move[0]
 
