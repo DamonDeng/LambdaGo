@@ -1,6 +1,8 @@
 from go_core.goboard import GoBoard
 from dnn.tensor_model import TensorModel
 
+import time
+
 
 class SimpleRobot(object):
 
@@ -10,6 +12,11 @@ class SimpleRobot(object):
         self.max_play_move = 1024
         self.ColorBlackChar = 'b'
         self.ColorWhiteChar = 'w'
+
+        self.komi = 7.5
+
+        # use current time as prefix of saved model
+        self.prefix = str(time.strftime("%Y_%m_%d_%H_%M",time.localtime(time.time())))
         
 
         # init board_size*board_size of simulating board
@@ -66,7 +73,7 @@ class SimpleRobot(object):
                     score_board_list.append(score_board)
                 self.model.train(input_data=board_states, input_data_y=score_board_list, steps=10)
                 print ('Train finished, saving model.....')
-                self.model.save_model('./model/testing_iter'+str(i)+'.mdl')
+                self.model.save_model('./model/'+self.prefix+'_'+str(i)+'.mdl')
 
 
 
@@ -84,17 +91,26 @@ class SimpleRobot(object):
 
 
 
-    def simulate_best_move(self, color):
+    def simulate_best_move(self, color, pos_filter=None):
         move_and_result = {}
+
+        ko_pos = None
 
         for row in range(self.board_size):
             for col in range(self.board_size):
                 if self.board.is_empty((row, col)):
                     board_index = row*self.board_size + col
                     self.simulate_board_list[board_index].copy_from(self.board)
-                    is_valid = self.simulate_board_list[board_index].apply_move(color, (row,col))
+                    is_valid, reason = self.simulate_board_list[board_index].apply_move(color, (row,col))
                     if is_valid == True:
-                        move_and_result[(row, col)] = self.simulate_board_list[board_index]
+                        if pos_filter != None:
+                            if not (row, col) in pos_filter:
+                                move_and_result[(row, col)] = self.simulate_board_list[board_index]
+                        else:
+                            move_and_result[(row, col)] = self.simulate_board_list[board_index]
+                    else:
+                        if reason == self.board.MoveResult_IsKo:
+                            ko_pos = (row, col)
 
         # debug display of all the moves tried: 
         # for row in range(self.board_size):
@@ -116,7 +132,7 @@ class SimpleRobot(object):
         right_move = (None, -10000)
 
         if len(all_moves) > 0:
-            selected_move = all_moves[0]
+            # selected_move = all_moves[0]
             input_states = []
             input_pos = []
             for pos in all_moves:
@@ -141,19 +157,27 @@ class SimpleRobot(object):
             print ('selected move:' + str(right_move[0]) + ' with value:' + str(right_move[1]))
 
 
-        return right_move
+        return right_move, ko_pos
 
 
     def select_move(self, color):
 
-        right_move = self.simulate_best_move(color)
+        right_move, ko_pos = self.simulate_best_move(color)
+
+        ko_filter = None
+
+        if not ko_pos is None:
+            ko_filter = []
+            ko_filter.append(ko_pos)
+
+        
 
         if color == self.ColorBlackChar:
-            if right_move[1] < 0:
-                right_move = self.simulate_best_move(self.ColorWhiteChar)
+            if right_move[1] < self.komi:
+                right_move, _ = self.simulate_best_move(self.ColorWhiteChar, ko_filter)
         elif color == self.ColorWhiteChar:
-            if right_move[1] > 0:
-                right_move = self.simulate_best_move(self.ColorBlackChar)
+            if right_move[1] > self.komi:
+                right_move, _ = self.simulate_best_move(self.ColorBlackChar, ko_filter)
         
 
         selected_move = right_move[0]
@@ -167,8 +191,8 @@ class SimpleRobot(object):
             print('GenMove Result: PASS')
             print(str(self.board))
         else:
-            self.board.apply_move(color, selected_move)
             print('Final Result:' + str(selected_move))
+            self.board.apply_move(color, selected_move)
             print(str(self.board))
 
         return selected_move

@@ -7,6 +7,15 @@ class GoBoard(object):
         self.ColorBlack = 1
         self.ColorWhite = -1
         self.ColorEmpty = 0
+
+        self.MoveResult_Normal = 0
+        self.MoveResult_SolidEye = 1
+        self.MoveResult_IsKo = 2
+        self.MoveResult_OutOfMax = 3
+        self.MoveResult_Pass = 4
+        self.MoveResult_NotEmpty = 5
+        self.MoveResult_IsSuicide = 6
+
         self.reset(board_size)
 
     def reset(self, board_size): 
@@ -189,7 +198,7 @@ class GoBoard(object):
 
         if pos is None:
         # current player pass, just return
-            return True
+            return True, self.MoveResult_Pass
 
         # apply move to position
         # print('# applying move: ' + color + "  " + str(pos))
@@ -199,15 +208,17 @@ class GoBoard(object):
         if cur_move_number >= self.max_move_number:
             # this board has more than 1024 moves, it is full, just return
             print('#warning: reach max move number')
-            return False
+            return False, self.MoveResult_OutOfMax
 
         (row, col) = pos
         color_value = self.get_color_value(color)
         enemy_color_value = self.get_enemy_color_value(color)
 
+        # print (self.board)
+
         if self.board[row][col] != 0:
             # current point is not empty, return
-            return False
+            return False, self.MoveResult_NotEmpty
     
 
         self.board[row][col] = color_value
@@ -220,7 +231,7 @@ class GoBoard(object):
         if not (up_removed > 0 or right_removed >0 or down_removed > 0 or left_removed > 0):
             suicide = self.remove_if_dead(row, col)
             if suicide:
-                return False
+                return False, self.MoveResult_IsSuicide
 
         if up_removed+right_removed+down_removed+left_removed > 1:
             # more than one stones were removed, it could not be a potential_ko
@@ -259,12 +270,12 @@ class GoBoard(object):
         self.last_move_pos = pos
 
         if current_move_is_ko == True:
-            return False
+            return False, self.MoveResult_IsKo
         else:
             if self.is_solid_eye(color, pos):
-                return False
+                return False, self.MoveResult_SolidEye
             else:
-                return True
+                return True, self.MoveResult_Normal
 
 
 
