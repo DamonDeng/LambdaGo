@@ -214,10 +214,11 @@ class SimpleRobot(object):
             print ('# right move:' + str(right_move[0]) + ' with value:' + str(right_move[1]))
 
         if not best_move_is_lossing:
-            print ('# not lossing')
+            print ('#----not----lossing-----')
+                   
             return right_move, forbidden_moves
 
-
+        print ('#-lossing---------------')
 
         # prediction tell us that current player is lossing,
         # trying to select move base on board score
