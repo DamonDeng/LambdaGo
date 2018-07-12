@@ -95,8 +95,13 @@ class SimpleRobot(object):
 
         self.board.apply_move(color, pos)
 
+        start_time = time.time()
+
         self.board.update_score_board()
 
+        end_time = time.time()
+
+        print ('total update time:' + str(end_time - start_time))
         print(str(self.board))
 
     def showboard(self):
@@ -222,60 +227,74 @@ class SimpleRobot(object):
 
         print ('#-lossing---------------')
 
-        # prediction tell us that current player is lossing,
-        # trying to select move base on board score
 
-        top_start_time = time.time()
+        # just using random selection while it is lossing:
 
-        input_score = []
-        input_pos = []
-        for pos in all_moves:
-
-            temp_board = move_and_result.get(pos)
-          
-            temp_board.update_score_board()
-            input_score.append(temp_board.score_board_sum)
-
-            input_pos.append(pos)
-
-        top_update_end_time = time.time()
-
-        move_and_score = zip(input_pos, predict_result, input_score)
-            
-        if color_value == self.board.ColorBlack:
-            move_and_score.sort(key=lambda x:x[2], reverse=True)
-        else:
-            move_and_score.sort(key=lambda x:x[2])
         
-        top_score = move_and_score[0][2]
 
-        # print ('# top_score:' + str(top_score))
+        random_int = random.randint(0, len(move_and_predict)-1)
 
-        top_number = 1
-        for i in range(1, len(move_and_score)):
-            # print ('# move:' + str(i) + ' score:' + str(move_and_score[i][2]))
-            if move_and_score[i][2] == top_score:
-                top_number = top_number + 1
-            else:
-                break
+        right_move = move_and_predict[random_int]
 
-        # print ('#top_number:' + str(top_number))
-
-        random_int = random.randint(0, top_number-1)
-
-        # print ('# random int:' + str(random_int))
-        right_move = move_and_score[random_int]
-
-        top_end_time = time.time()
-
-        print ('top score update time used: ' + str(top_update_end_time - top_start_time))
-        print ('top score compute time used: ' + str(top_end_time - top_update_end_time))
-
-        print ('# top score:' + str(top_score) + '        ')
-        print ('# move:' + str(right_move[0]) + ' with score:' + str(right_move[2]) + '    ')
+        print ('# move:' + str(right_move[0]) + ' with prediction:' + str(right_move[1]) + '    ')
         
 
         return right_move, forbidden_moves
+
+        # prediction tell us that current player is lossing,
+        # trying to select move base on board score
+
+        # top_start_time = time.time()
+
+        # input_score = []
+        # input_pos = []
+        # for pos in all_moves:
+
+        #     temp_board = move_and_result.get(pos)
+          
+        #     temp_board.update_score_board()
+        #     input_score.append(temp_board.score_board_sum)
+
+        #     input_pos.append(pos)
+
+        # top_update_end_time = time.time()
+
+        # move_and_score = zip(input_pos, predict_result, input_score)
+            
+        # if color_value == self.board.ColorBlack:
+        #     move_and_score.sort(key=lambda x:x[2], reverse=True)
+        # else:
+        #     move_and_score.sort(key=lambda x:x[2])
+        
+        # top_score = move_and_score[0][2]
+
+        # # print ('# top_score:' + str(top_score))
+
+        # top_number = 1
+        # for i in range(1, len(move_and_score)):
+        #     # print ('# move:' + str(i) + ' score:' + str(move_and_score[i][2]))
+        #     if move_and_score[i][2] == top_score:
+        #         top_number = top_number + 1
+        #     else:
+        #         break
+
+        # # print ('#top_number:' + str(top_number))
+
+        # random_int = random.randint(0, top_number-1)
+
+        # # print ('# random int:' + str(random_int))
+        # right_move = move_and_score[random_int]
+
+        # top_end_time = time.time()
+
+        # print ('top score update time used: ' + str(top_update_end_time - top_start_time))
+        # print ('top score compute time used: ' + str(top_end_time - top_update_end_time))
+
+        # print ('# top score:' + str(top_score) + '        ')
+        # print ('# move:' + str(right_move[0]) + ' with score:' + str(right_move[2]) + '    ')
+        
+
+        # return right_move, forbidden_moves
 
 
     def select_move(self, color):
