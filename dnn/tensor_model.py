@@ -21,7 +21,7 @@ class TensorModel(object):
         self.output, self.loss = self.define_model(self.input_x, self.input_y)
 
 
-        self.saver = None
+        self.saver = tf.train.Saver()
 
         if self.is_new_model == True:
             
