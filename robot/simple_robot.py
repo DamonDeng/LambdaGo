@@ -7,7 +7,7 @@ import random
 
 class SimpleRobot(object):
 
-    def __init__(self, layer_number=19):
+    def __init__(self, layer_number=19, old_model=None):
 
         self.layer_number = layer_number
 
@@ -33,7 +33,9 @@ class SimpleRobot(object):
 
         self.board = GoBoard(self.board_size)
         self.model = TensorModel(self.board_size, layer_number=self.layer_number)
-        # self.model.load_model('./model/firstmodel.mdl')
+
+        if old_model is not None:
+            self.model.load_model('./model/' + old_model)
 
     def reset_board(self):
         self.board.reset(self.board_size)
@@ -45,8 +47,15 @@ class SimpleRobot(object):
         board_states = []
 
         for i in range(self.max_play_move):
+            # moving the cursor to up left corner
+            print('\x1b[0;0f')
+
             selected_black_move = self.select_move_and_display(self.ColorBlackChar)
             board_states.append(self.board.board)
+
+            # moving the cursor to up left corner
+            print('\x1b[0;0f')
+
             selected_white_move = self.select_move_and_display(self.ColorWhiteChar)
             board_states.append(self.board.board)
             if selected_black_move == None and selected_white_move == None:
@@ -58,27 +67,40 @@ class SimpleRobot(object):
             print ('Out of the max play move: ' + str(self.max_play_move))
             return False, None, None
         else:
-            print ('Both play PASS!')
+            # print ('Both play PASS!')
             self.board.update_score_board()
 
-            print ('Result Score board:')
+            if self.board.score_board_sum > self.komi:
+                self.black_win_times = self.black_win_times + 1
+            elif self.board.score_board_sum < self.komi:
+                self.white_win_times = self.white_win_times + 1
+
+            # print ('Result Score board:')
             # print (str(self.board))
             # print (self.board.get_score_only_debug_string())
             return True, board_states, self.board.score_board
 
     def self_train(self, iter_number = 10):
 
+        self.train_iter = 0
+        self.black_win_times = 0
+        self.white_win_times = 0
+
         for i in range(iter_number):
 
-            
+            self.train_iter = self.train_iter + 1
+
             # clear the screen while started to train
             print('\033[H\033[J')
 
             self.board.reset(self.board_size)
             both_pass, board_states, score_board = self.self_play()
             if both_pass:
-                print ('#  ')
-                print ('#  ')
+                print ('# ')
+                print ('# ')
+                print ('# ')
+                print ('# ')
+                
                 print ('# Both PASS: start to train the model, iter:' + str(i))
                 score_board_list = []
                 for i in range(len(board_states)):
@@ -116,7 +138,7 @@ class SimpleRobot(object):
         forbidden_moves = []
 
         # time debug for prediction
-        start_time = time.time()
+        # start_time = time.time()
 
         for row in range(self.board_size):
             for col in range(self.board_size):
@@ -137,8 +159,8 @@ class SimpleRobot(object):
                             forbidden_moves.append((row, col))
 
         # time debug for prediction
-        end_time = time.time()
-        print('# time used for simulation:' + str(end_time - start_time))
+        # end_time = time.time()
+        # print('# time used for simulation:' + str(end_time - start_time)  + '         ')
 
         # debug display of all the moves tried: 
         # for row in range(self.board_size):
@@ -188,8 +210,8 @@ class SimpleRobot(object):
             predict_result = self.model.predict(input_states)
 
             # time debug for prediction
-            end_time = time.time()
-            print('# time used for prediction:' + str(end_time - start_time))
+            # end_time = time.time()
+            # print('# time used for prediction:' + str(end_time - start_time) + '         ')
 
             move_and_predict = zip(input_pos, predict_result)
 
@@ -199,7 +221,7 @@ class SimpleRobot(object):
             color_value = self.board.get_color_value(color)
 
             if color_value == self.board.ColorBlack:
-                print ('# black top move:' + str(move_and_predict[0][0]) + ' with value:' + str(move_and_predict[0][1]))
+                print ('# black top move:' + str(move_and_predict[0][0]) + ' with prediction:' + str(move_and_predict[0][1]) + '         ')
 
                 if move_and_predict[0][1] > self.komi:
                     right_move = move_and_predict[0]
@@ -209,7 +231,7 @@ class SimpleRobot(object):
                     best_move_is_lossing = True
                     
             elif color_value == self.board.ColorWhite:
-                print ('# white top move:' + str(move_and_predict[-1][0]) + ' with value:' + str(move_and_predict[-1][1]))
+                print ('# white top move:' + str(move_and_predict[-1][0]) + ' with prediction:' + str(move_and_predict[-1][1]) + '         ')
 
                 if move_and_predict[-1][1] < self.komi:
                     right_move = move_and_predict[-1]
@@ -218,10 +240,11 @@ class SimpleRobot(object):
                     right_move = move_and_predict[-1]
                     best_move_is_lossing = True
 
-            print ('# right move:' + str(right_move[0]) + ' with value:' + str(right_move[1]))
+            # print ('# right move:' + str(right_move[0]) + ' with valueprediction:' + str(right_move[1]) + '       ')
 
         if not best_move_is_lossing:
             print ('#----not----lossing-----')
+            print ('#                                                                     ')
                    
             return right_move, forbidden_moves
 
@@ -236,7 +259,7 @@ class SimpleRobot(object):
 
         right_move = move_and_predict[random_int]
 
-        print ('# move:' + str(right_move[0]) + ' with prediction:' + str(right_move[1]) + '    ')
+        print ('# random move:' + str(right_move[0]) + ' with prediction:' + str(right_move[1]) + '    ')
         
 
         return right_move, forbidden_moves
@@ -320,21 +343,24 @@ class SimpleRobot(object):
  
 
     def select_move_and_display(self, color):
+        print ('# Self Train::::  Iter:' + str(self.train_iter))
+        print ('# Black Win:' + str(self.black_win_times) + '       White Win:' + str(self.white_win_times))
+        print ('#-------------------------------------------------------------#')
         right_move, forbidden_moves = self.simulate_best_move(color)
 
         #set the cursor to zero point and clean some space for display:
         
-        print('\x1b[0;0f')
 
-        print ('selected move:' + str(right_move[0]) + ' with value:' + str(right_move[1]))
+
+        # print ('selected move:' + str(right_move[0]) + ' with value:' + str(right_move[1]) + '         ')
 
         selected_move = right_move[0]
 
         if selected_move == None:
-            print('GenMove Result: PASS')
+            print('Final Result: PASS                                                            ')
             print(str(self.board))
         else:
-            print('Final Result:' + str(selected_move))
+            print('Final Result:' + str(selected_move) + '                                         ')
             self.board.apply_move(color, selected_move)
             self.board.update_score_board()
             print(str(self.board))
