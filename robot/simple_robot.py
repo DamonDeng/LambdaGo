@@ -32,10 +32,13 @@ class SimpleRobot(object):
             self.simulate_board_list.append(GoBoard(self.board_size))
 
         self.board = GoBoard(self.board_size)
-        self.model = TensorModel(self.board_size, layer_number=self.layer_number)
 
-        if old_model is not None:
-            self.model.load_model('./model/' + old_model)
+        if old_model is None:
+            self.model = TensorModel(self.board_size, layer_number=self.layer_number)
+        else:
+            print ('Trying to load old model for continue training:' + './model/' + old_model)
+            self.model = TensorModel(self.board_size, model_path='./model/' + old_model, layer_number=self.layer_number)
+        
 
     def reset_board(self):
         self.board.reset(self.board_size)
@@ -357,6 +360,9 @@ class SimpleRobot(object):
         selected_move = right_move[0]
 
         if selected_move == None:
+            print ('                                                                             ')
+            print ('                                                                             ')
+            print ('                                                                             ')
             print('Final Result: PASS                                                            ')
             print(str(self.board))
         else:
