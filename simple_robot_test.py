@@ -1,15 +1,16 @@
 from robot.simple_robot import SimpleRobot
+from robot.self_trainer import SelfTrainer
 
 import sys
 
 def start_self_train(res_layer_number=19, steps=100, old_model=None):
 
     if old_model is None:
-        test_robot = SimpleRobot(layer_number=res_layer_number)
+        test_trainer = SelfTrainer(layer_number=res_layer_number)
     else:
-        test_robot = SimpleRobot(layer_number=res_layer_number, old_model=old_model)
+        test_trainer = SelfTrainer(layer_number=res_layer_number, old_model=old_model)
 
-    test_robot.self_train(steps)
+    test_trainer.self_train(steps)
 
 def main(argv):
     if argv == None:

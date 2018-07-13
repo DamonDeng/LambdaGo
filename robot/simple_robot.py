@@ -7,8 +7,8 @@ import random
 
 class SimpleRobot(object):
 
-    def __init__(self, layer_number=19, old_model=None):
-
+    def __init__(self, name='DefaultSimpleRobot', layer_number=19, old_model=None):
+        self.name = name
         self.layer_number = layer_number
 
         self.board_size = 19
@@ -19,119 +19,37 @@ class SimpleRobot(object):
 
         self.komi = 7.5
 
-        self.train_iter = 0
-        self.black_win_times = 0
-        self.white_win_times = 0
-
-        # use current time as prefix of saved model
-        self.prefix = str(time.strftime("%Y_%m_%d_%H_%M",time.localtime(time.time())))
-        
-
         # init board_size*board_size of simulating board
         for i in range (self.board_size*self.board_size):
             self.simulate_board_list.append(GoBoard(self.board_size))
 
-        self.board = GoBoard(self.board_size)
+        self.go_board = GoBoard(self.board_size)
 
         if old_model is None:
-            self.model = TensorModel(self.board_size, layer_number=self.layer_number)
+            self.model = TensorModel(self.name, self.board_size, layer_number=self.layer_number)
         else:
             print ('Trying to load old model for continue training:' + './model/' + old_model)
-            self.model = TensorModel(self.board_size, model_path='./model/' + old_model, layer_number=self.layer_number)
+            self.model = TensorModel(self.name, self.board_size, model_path='./model/' + old_model, layer_number=self.layer_number)
         
 
     def reset_board(self):
-        self.board.reset(self.board_size)
-
-    def self_play(self):
-
-        both_pass = False
-
-        board_states = []
-
-        for i in range(self.max_play_move):
-            # moving the cursor to up left corner
-            print('\x1b[0;0f')
-
-            selected_black_move = self.select_move_and_display(self.ColorBlackChar)
-            board_states.append(self.board.board)
-
-            # moving the cursor to up left corner
-            print('\x1b[0;0f')
-
-            selected_white_move = self.select_move_and_display(self.ColorWhiteChar)
-            board_states.append(self.board.board)
-            if selected_black_move == None and selected_white_move == None:
-                
-                both_pass = True
-                break
-
-        if not both_pass:
-            print ('Out of the max play move: ' + str(self.max_play_move))
-            return False, None, None
-        else:
-            # print ('Both play PASS!')
-            self.board.update_score_board()
-
-            if self.board.score_board_sum > self.komi:
-                self.black_win_times = self.black_win_times + 1
-            elif self.board.score_board_sum < self.komi:
-                self.white_win_times = self.white_win_times + 1
-
-            # print ('Result Score board:')
-            # print (str(self.board))
-            # print (self.board.get_score_only_debug_string())
-            return True, board_states, self.board.score_board
-
-    def self_train(self, iter_number = 10):
-
-        self.train_iter = 0
-        self.black_win_times = 0
-        self.white_win_times = 0
-
-        for i in range(iter_number):
-
-            self.train_iter = self.train_iter + 1
-
-            # clear the screen while started to train
-            print('\033[H\033[J')
-
-            self.board.reset(self.board_size)
-            both_pass, board_states, score_board = self.self_play()
-            if both_pass:
-                print ('# ')
-                print ('# ')
-                print ('# ')
-                print ('# ')
-                
-                print ('# Both PASS: start to train the model, iter:' + str(i))
-                score_board_list = []
-                for i in range(len(board_states)):
-                    score_board_list.append(score_board)
-                self.model.train(input_data=board_states, input_data_y=score_board_list, steps=10)
-                print ('# Train finished, saving model.....')
-                self.model.save_model('./model/'+self.prefix+'_'+str(i)+'.mdl')
-
-
+        self.go_board.reset(self.board_size)
 
     def apply_move(self, color, pos):
 
-        print ('aplying move:' + color + ' in the position ' + str(pos))
+        # print ('aplying move:' + color + ' in the position ' + str(pos))
 
-        self.board.apply_move(color, pos)
+        self.go_board.apply_move(color, pos)
 
-        start_time = time.time()
-
-        self.board.update_score_board()
-
-        end_time = time.time()
-
-        print ('total update time:' + str(end_time - start_time))
-        print(str(self.board))
+        # start_time = time.time()
+        # self.board.update_score_board()
+        # end_time = time.time()
+        # print ('total update time:' + str(end_time - start_time))
+        # print(str(self.board))
 
     def showboard(self):
-        self.board.update_score_board()
-        return str(self.board)
+        self.go_board.update_score_board()
+        return str(self.go_board)
 
 
 
@@ -145,9 +63,9 @@ class SimpleRobot(object):
 
         for row in range(self.board_size):
             for col in range(self.board_size):
-                if self.board.is_empty((row, col)):
+                if self.go_board.is_empty((row, col)):
                     board_index = row*self.board_size + col
-                    self.simulate_board_list[board_index].copy_from(self.board)
+                    self.simulate_board_list[board_index].copy_from(self.go_board)
                     is_valid, reason = self.simulate_board_list[board_index].apply_move(color, (row,col))
                     if is_valid == True:
                         if pos_filter != None:
@@ -156,31 +74,12 @@ class SimpleRobot(object):
                         else:
                             move_and_result[(row, col)] = self.simulate_board_list[board_index]
                     else:
-                        if reason == self.board.MoveResult_IsKo or \
-                           reason == self.board.MoveResult_IsSuicide or \
-                           reason == self.board.MoveResult_SolidEye:
+                        if reason == self.go_board.MoveResult_IsKo or \
+                           reason == self.go_board.MoveResult_IsSuicide or \
+                           reason == self.go_board.MoveResult_SolidEye:
                             forbidden_moves.append((row, col))
 
-        # time debug for prediction
-        # end_time = time.time()
-        # print('# time used for simulation:' + str(end_time - start_time)  + '         ')
-
-        # debug display of all the moves tried: 
-        # for row in range(self.board_size):
-        #     for col in range(self.board_size):
-        #         pos = (row, col)
-        #         if move_and_result.has_key(pos):
-        #             print ('Result of :' + str(pos))
-        #             print (str(move_and_result[pos]))
-    
-        # selected_move = None
-
         all_moves = move_and_result.keys()
-
-        # for pos in all_moves:
-        #     if not self.board.is_solid_eye(color, pos):
-        #         selected_move = pos
-        #         break
 
         right_move = (None, 0)
 
@@ -188,10 +87,10 @@ class SimpleRobot(object):
 
         if len(all_moves) <= 0:
             # no available move left, just return PASS, and current score board sum as value
-            if not self.board.score_board_updated:
-                self.board.update_score_board()
+            if not self.go_board.score_board_updated:
+                self.go_board.update_score_board()
 
-            right_move = (None, self.board.score_board_sum)
+            right_move = (None, self.go_board.score_board_sum)
 
             return right_move, forbidden_moves
         else:
@@ -221,9 +120,9 @@ class SimpleRobot(object):
             
             move_and_predict.sort(key=lambda x:x[1], reverse=True)
 
-            color_value = self.board.get_color_value(color)
+            color_value = self.go_board.get_color_value(color)
 
-            if color_value == self.board.ColorBlack:
+            if color_value == self.go_board.ColorBlack:
                 print ('# black top move:' + str(move_and_predict[0][0]) + ' with prediction:' + str(move_and_predict[0][1]) + '         ')
 
                 if move_and_predict[0][1] > self.komi:
@@ -233,7 +132,7 @@ class SimpleRobot(object):
                     right_move = move_and_predict[0]
                     best_move_is_lossing = True
                     
-            elif color_value == self.board.ColorWhite:
+            elif color_value == self.go_board.ColorWhite:
                 print ('# white top move:' + str(move_and_predict[-1][0]) + ' with prediction:' + str(move_and_predict[-1][1]) + '         ')
 
                 if move_and_predict[-1][1] < self.komi:
@@ -267,133 +166,45 @@ class SimpleRobot(object):
 
         return right_move, forbidden_moves
 
-        # prediction tell us that current player is lossing,
-        # trying to select move base on board score
-
-        # top_start_time = time.time()
-
-        # input_score = []
-        # input_pos = []
-        # for pos in all_moves:
-
-        #     temp_board = move_and_result.get(pos)
-          
-        #     temp_board.update_score_board()
-        #     input_score.append(temp_board.score_board_sum)
-
-        #     input_pos.append(pos)
-
-        # top_update_end_time = time.time()
-
-        # move_and_score = zip(input_pos, predict_result, input_score)
-            
-        # if color_value == self.board.ColorBlack:
-        #     move_and_score.sort(key=lambda x:x[2], reverse=True)
-        # else:
-        #     move_and_score.sort(key=lambda x:x[2])
-        
-        # top_score = move_and_score[0][2]
-
-        # # print ('# top_score:' + str(top_score))
-
-        # top_number = 1
-        # for i in range(1, len(move_and_score)):
-        #     # print ('# move:' + str(i) + ' score:' + str(move_and_score[i][2]))
-        #     if move_and_score[i][2] == top_score:
-        #         top_number = top_number + 1
-        #     else:
-        #         break
-
-        # # print ('#top_number:' + str(top_number))
-
-        # random_int = random.randint(0, top_number-1)
-
-        # # print ('# random int:' + str(random_int))
-        # right_move = move_and_score[random_int]
-
-        # top_end_time = time.time()
-
-        # print ('top score update time used: ' + str(top_update_end_time - top_start_time))
-        # print ('top score compute time used: ' + str(top_end_time - top_update_end_time))
-
-        # print ('# top score:' + str(top_score) + '        ')
-        # print ('# move:' + str(right_move[0]) + ' with score:' + str(right_move[2]) + '    ')
-        
-
-        # return right_move, forbidden_moves
-
 
     def select_move(self, color):
 
         right_move, forbidden_moves = self.simulate_best_move(color)
 
-        selected_move = right_move[0]
+        self.go_board.apply_move(color, right_move[0])
 
-        if selected_move == None:
-            print('GenMove Result: PASS')
-            print(str(self.board))
-        else:
-            print('Final Result:' + str(selected_move))
-            self.board.apply_move(color, selected_move)
-            self.board.update_score_board()
-            print(str(self.board))
+        # print ('# selected move:' + str(right_move))
 
         return right_move[0]
 
 
         
+    def train(self, board_states, move_sequence, score_board):
 
- 
+        print ('# pretent to be in training state....')
 
-    def select_move_and_display(self, color):
-        print ('# Self Train::::  Iter:' + str(self.train_iter))
-        print ('# Black Win:' + str(self.black_win_times) + '       White Win:' + str(self.white_win_times))
-        print ('#-------------------------------------------------------------#')
-        right_move, forbidden_moves = self.simulate_best_move(color)
+    def new_game(self):
+        self.reset_board()
 
-        #set the cursor to zero point and clean some space for display:
+        self.simulate_board_list = []
+        for i in range (self.board_size*self.board_size):
+            self.simulate_board_list.append(GoBoard(self.board_size))
+
+    def get_current_state(self):
+        return self.go_board.board
+
+    def get_score_board(self):
+
+        if not self.go_board.score_board_updated:
+            self.go_board.update_score_board()
         
+        return self.go_board.score_board
 
+    def get_score(self):
 
-        # print ('selected move:' + str(right_move[0]) + ' with value:' + str(right_move[1]) + '         ')
+        if not self.go_board.score_board_updated:
+            self.go_board.update_score_board()
+        
+        return self.go_board.score_board_sum
 
-        selected_move = right_move[0]
-
-        if selected_move == None:
-            print ('                                                                             ')
-            print ('                                                                             ')
-            print ('                                                                             ')
-            print('Final Result: PASS                                                            ')
-            print(str(self.board))
-        else:
-            print('Final Result:' + str(selected_move) + '                                         ')
-            self.board.apply_move(color, selected_move)
-            self.board.update_score_board()
-            print(str(self.board))
-
-        return selected_move
-
-        # if right_move[0] != None:
-        #     # todo, now, pass move from first simulate_bst_move
-        #     # means that there is no move to be selected.
-        #     # skip enemy value checking if there is no move to be selected.
-        #     # in the future, if pass can be selected while there is still other move
-        #     # we need to change the following code to check why pass was slected.
-
-        #     enemy_right_move = None
-
-        #     if color == self.ColorBlackChar:
-        #         if right_move[1] < self.komi:
-        #             enemy_right_move, _ = self.simulate_best_move(self.ColorWhiteChar, forbidden_moves)
-        #     elif color == self.ColorWhiteChar:
-        #         if right_move[1] > self.komi:
-        #             enemy_right_move, _ = self.simulate_best_move(self.ColorBlackChar, forbidden_moves)
-
-        #     if enemy_right_move != None:
-        #         # need to check with enemy's move, as current side is lossing
-        #         if enemy_right_move[0] != None:
-        #             # there are moves to be selected in enemy's moves
-        #             right_move = enemy_right_move
-
-                    
 

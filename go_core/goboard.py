@@ -379,6 +379,9 @@ class GoBoard(object):
 
     def update_score_board(self):
 
+        if self.score_board_updated:
+            return True
+
         # handit not supported:
         if self.move_number == 0:
             self.score_board_sum = 0
