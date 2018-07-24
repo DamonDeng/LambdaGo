@@ -171,6 +171,11 @@ class MTCSRobot(object):
             print ('# ')
             print (display_string)
 
+        if abs(right_node.current_value) >= 1:
+            print('# incorrect node:')
+            print (str(right_node))
+            time.sleep(20)
+
         
 
         # print ('Found right move:' + str(right_move[0]) + 'with value:' + str(right_move[1]))
@@ -234,7 +239,7 @@ class MTCSRobot(object):
             # print('number of children of current node:' +str(len(current_node.children)))
             current_node.visit_count = current_node.visit_count + 1
             current_node.total_value = current_node.total_value + value
-            current_node.average_value = current_node.average_value/current_node.visit_count/self.stone_number
+            current_node.average_value = (current_node.total_value/current_node.visit_count) / self.stone_number
             current_node.current_value = current_node.average_value
             return value
         
@@ -328,7 +333,7 @@ class MTCSRobot(object):
         current_node.is_leaf = False
         current_node.visit_count = current_node.visit_count + 1
         current_node.total_value = current_node.total_value + current_value
-        current_node.average_value = current_node.total_value/current_node.visit_count/self.stone_number
+        current_node.average_value = (current_node.total_value/current_node.visit_count) / self.stone_number
         current_node.current_value = current_node.average_value
 
         return current_value
