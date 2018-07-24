@@ -89,7 +89,12 @@ class MTCSRobot(object):
             current_move[row*self.board_size+col] = 1
             self.training_move.append(current_move)
 
-        self.go_board.apply_move(color, pos)
+        is_valid, reason = self.go_board.apply_move(color, pos)
+
+        if not is_valid:
+            print ('# incorrect move:' + color + '  pos:' + str(pos) + '  Reason:' + str(reason))
+        else:
+            print ('#   correct move:' + color + '  pos:' + str(pos) + '                            ')
 
         # start_time = time.time()
         # self.board.update_score_board()
