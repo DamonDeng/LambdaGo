@@ -200,6 +200,8 @@ class MTCSRobot(object):
 
         current_color = current_node.player_color
 
+        current_data_list = []
+
         current_data = []
 
         current_board = current_node.simulate_board.board
@@ -212,10 +214,12 @@ class MTCSRobot(object):
         else:
             raise Exception('Incorrect color character')
 
+        for i in range(361):
+            current_data_list.append(current_data)
 
         predict_start_time = time.time()
 
-        result = self.model.predict(current_data)
+        result = self.model.predict(current_data_list)
 
         predict_end_time = time.time()
 
