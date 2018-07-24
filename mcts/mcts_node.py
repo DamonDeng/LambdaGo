@@ -9,7 +9,7 @@ class MTCSNode(object):
         self.simulate_board = None
 
         self.visit_count = 0
-        self.current_value = 0
+        # self.current_value = 0
         self.average_value = 0
         self.total_value = 0
 
@@ -38,20 +38,20 @@ class MTCSNode(object):
         # so current node's player color is diffrent from parent's color
         # return negative value if current player color is Black, as that means parent's player color is white 
         if self.player_color == GoBoard.ColorBlack:
-            return -self.current_value + self.policy_value/(self.visit_count+1)
+            return -self.average_value + self.policy_value/(self.visit_count+1)
         elif self.player_color == GoBoard.ColorWhite:
-            return self.current_value + self.policy_value/(self.visit_count+1)
+            return self.average_value + self.policy_value/(self.visit_count+1)
         else:
             raise Exception('Incorrect Color in MCTS Node')
 
     def __str__(self):
         result_string = ''
         result_string = result_string + 'IsRoot:' + str(self.is_root) + '\n'
-        result_string = result_string + 'VisitCount:' + str(self.is_root) + '\n'
-        result_string = result_string + 'TotalValue:' + str(self.is_root) + '\n'
-        result_string = result_string + 'AverageValue:' + str(self.is_root) + '\n'
-        result_string = result_string + 'CurrentValue:' + str(self.is_root) + '\n'
-        result_string = result_string + 'Policy:' + str(self.is_root) + '\n'
+        result_string = result_string + 'VisitCount:' + str(self.visit_count) + '\n'
+        result_string = result_string + 'TotalValue:' + str(self.total_value) + '\n'
+        result_string = result_string + 'AverageValue:' + str(self.average_value) + '\n'
+        # result_string = result_string + 'CurrentValue:' + str(self.is_root) + '\n'
+        result_string = result_string + 'Policy:' + str(self.policy_value) + '\n'
 
         return result_string
         

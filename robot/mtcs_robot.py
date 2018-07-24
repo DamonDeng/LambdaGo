@@ -158,7 +158,7 @@ class MTCSRobot(object):
         move_string = ' Move:' + str(right_move[0]) + '                   '
         value_string = ' Value:' + str(right_move[1]) + '                    '
         visit_count_string = '    Count:' + str(right_node.visit_count) + '                     '
-        node_value_string = '   NodeValue:' + str(right_node.current_value) + '                    '
+        node_value_string = '   NodeValue:' + str(right_node.average_value) + '                    '
         policy_value_string = '   Policy:' + str(right_node.policy_value) + '                     '
 
         display_string = display_string + move_string[0:20] + visit_count_string[0:20]
@@ -171,7 +171,7 @@ class MTCSRobot(object):
             print ('# ')
             print (display_string)
 
-        if abs(right_node.current_value) >= 1:
+        if abs(right_node.average_value) >= 1:
             print('# incorrect node:')
             print (str(right_node))
             time.sleep(20)
