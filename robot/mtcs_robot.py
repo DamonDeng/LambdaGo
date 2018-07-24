@@ -164,7 +164,14 @@ class MTCSRobot(object):
         display_string = display_string + move_string[0:20] + visit_count_string[0:20]
         display_string = display_string + value_string[0:25] + node_value_string[0:25] + policy_value_string[0:25]
 
-        print (display_string)
+        if GoBoard.get_color_value(color) == GoBoard.ColorBlack:
+            print (display_string)
+            print ('# ')
+        else:
+            print ('# ')
+            print (display_string)
+
+        
 
         # print ('Found right move:' + str(right_move[0]) + 'with value:' + str(right_move[1]))
         # print ('Visited count: ' + str(right_node.visit_count))
@@ -367,10 +374,23 @@ class MTCSRobot(object):
 
         self.go_board.update_score_board()
 
-        result_score = self.go_board.score_board
+        result_score = self.get_score()
+
+        if result_score > self.komi:
+            for i in range(len(self.training_move)):
+                if i%2 == 1:
+                    # black win while current move is for white, revert it
+                    self.training_move[i] = self.training_move[1] * -1 + 1
+        else:
+            for i in range(len(self.training_move)):
+                if i%2 == 0:
+                    # white win while current move is for black, revert it
+                    self.training_move[i] = self.training_move[1] * -1 + 1
+
+        result_score_board = self.go_board.score_board
 
         for i in range(train_data_len):
-            self.training_score.append(result_score)
+            self.training_score.append(result_score_board)
 
         print ('# robot ' + self.name + ' is in training.........')
 
