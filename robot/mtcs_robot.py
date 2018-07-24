@@ -14,6 +14,8 @@ class MTCSRobot(object):
         self.layer_number = layer_number
         self.search_time = search_time
 
+
+
         self.board_size = 19
         self.simulate_board_list = []
         self.max_play_move = 1024
@@ -115,8 +117,8 @@ class MTCSRobot(object):
         self.root_node.set_simulate_board(self.go_board)
         current_color = GoBoard.get_color_value(color)
         # root node is the node before current player play the stone, 
-        # so the color of root node should be enemy color of current color
-        self.root_node.player_color = GoBoard.reverse_color_value(current_color)
+        # so the color of root node should be color of current color
+        self.root_node.player_color = current_color
         self.root_node.is_root = True
 
         self.expand_mtcs_node(self.root_node, None)
@@ -370,7 +372,7 @@ class MTCSRobot(object):
 
         print ('# robot ' + self.name + ' is in training.........')
 
-        self.model.train(self.training_data, self.training_score, self.training_move, steps=20)
+        self.model.train(self.training_data, self.training_score, self.training_move, steps=2)
 
     def new_game(self):
         self.reset_board()
