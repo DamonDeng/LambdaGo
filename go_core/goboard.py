@@ -3,6 +3,18 @@ import copy
 
 class GoBoard(object):
 
+    ColorWhite = -1
+    ColorBlack = 1
+    ColorEmpty = 0
+
+    MoveResult_Normal = 0
+    MoveResult_SolidEye = 1
+    MoveResult_IsKo = 2
+    MoveResult_OutOfMax = 3
+    MoveResult_Pass = 4
+    MoveResult_NotEmpty = 5
+    MoveResult_IsSuicide = 6
+
     def __init__(self, board_size=19):
         self.ColorBlack = 1
         self.ColorWhite = -1
@@ -486,10 +498,14 @@ class GoBoard(object):
             return
 
 
+    def get_color(self, pos):
+        (row, col) = pos
+        return self.board[row][col]
 
 
     # convert the color letter to color value
-    def get_color_value(self, color):
+    @classmethod
+    def get_color_value(cls, color):
         if color == 'b':
             color_value = 1
         elif color == 'w':
@@ -500,7 +516,8 @@ class GoBoard(object):
         return color_value
 
     # convert the color letter to enemy's color value
-    def get_enemy_color_value(self, color):
+    @classmethod
+    def get_enemy_color_value(cls, color):
         if color == 'b':
             color_value = -1
         elif color == 'w':
@@ -509,8 +526,32 @@ class GoBoard(object):
             raise ValueError
         return color_value
 
+    # convert the color letter to color value
+    @classmethod
+    def get_color_char(cls, color_value):
+        if color_value == 1:
+            color = 'b'
+        elif color_value == -1:
+            color = 'w'
+        else:
+            raise ValueError
+
+        return color
+
+    # convert the color letter to enemy's color value
+    @classmethod
+    def get_enemy_color_char(cls, color_value):
+        if color_value == -1:
+            color = 'b'
+        elif color_value == 1:
+            color = 'w'
+        else:
+            raise ValueError
+        return color
+
     # reverse the color letter
-    def other_color(self, color):
+    @classmethod
+    def other_color(cls, color):
         '''
         Color of other player
         '''
@@ -520,7 +561,8 @@ class GoBoard(object):
             return 'b'
 
     # reverse the color_value 
-    def reverse_color_value(self, color_value):
+    @classmethod
+    def reverse_color_value(cls, color_value):
         if color_value == 0:
             return 0
         elif color_value == 1:

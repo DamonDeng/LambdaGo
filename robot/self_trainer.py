@@ -8,7 +8,7 @@ import random
 
 class SelfTrainer(object):
 
-    def __init__(self, layer_number=19, old_model=None):
+    def __init__(self, teacher_model, student_model, layer_number=19):
 
         self.layer_number = layer_number
 
@@ -25,8 +25,8 @@ class SelfTrainer(object):
         # use current time as prefix of saved model
         self.prefix = str(time.strftime("%Y_%m_%d_%H_%M",time.localtime(time.time())))
 
-        self.teacher = SimpleRobot(name='teacher', layer_number=layer_number)
-        self.student = SimpleRobot(name='student', layer_number=layer_number)
+        self.teacher = teacher_model
+        self.student = student_model
 
     def reset_statistic(self):
         self.train_iter = 0
