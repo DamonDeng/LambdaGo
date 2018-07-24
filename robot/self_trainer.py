@@ -18,6 +18,8 @@ class SelfTrainer(object):
         self.ColorBlackChar = 'b'
         self.ColorWhiteChar = 'w'
 
+        self.current_black_player = 'student'
+
         self.komi = 7.5
 
         self.reset_statistic()
@@ -124,7 +126,8 @@ class SelfTrainer(object):
             # clear the screen while started to train
             print('\033[H\033[J')
 
-            
+            self.current_black_player = 'student'
+
             both_pass, score, board_states, move_sequence, score_board = self.self_play(self.student, self.teacher)
 
             if both_pass:
@@ -135,7 +138,7 @@ class SelfTrainer(object):
                     self.white_win_times = self.white_win_times + 1
                     self.teacher_win_as_white = self.teacher_win_as_white + 1
 
-                print ('# trying to train 1')
+                print ('# Both pass, trying to train student as black.')
                 self.student.train(board_states, move_sequence, score_board)
             else:
                 print ('# reach max move, ignore this game')
@@ -143,7 +146,7 @@ class SelfTrainer(object):
             self.student.reset()
             self.teacher.reset()
                     
-
+            self.current_black_player = 'teacher'
             both_pass, score, board_states, move_sequence, score_board = self.self_play(self.teacher, self.student)
 
             if both_pass:
@@ -154,8 +157,10 @@ class SelfTrainer(object):
                     self.white_win_times = self.white_win_times + 1
                     self.student_win_as_white = self.student_win_as_white + 1
 
-                print ('# trying to train 2')
+                print ('# Both pass, trying to train student as white.')
                 self.student.train(board_states, move_sequence, score_board)
+            else:
+                print ('# reach max move, ignore this game')
 
             self.student.reset()
             self.teacher.reset()
@@ -167,5 +172,8 @@ class SelfTrainer(object):
         print('\x1b[0;0f')
         print ('# Self Train::::  Iter:' + str(self.train_iter))
         print ('# Black Win:' + str(self.black_win_times) + '       White Win:' + str(self.white_win_times))
+        print ('# Black Win as student:' + str(self.student_win_as_black) + '       White Win as teacher:' + str(self.teacher_win_as_white))
+        print ('# Black Win as teacher:' + str(self.teacher_win_as_black) + '       White Win as student:' + str(self.student_win_as_white))
+        print ('# Current Black Player:' + self.current_black_player)
         print ('#-------------------------------------------------------------#')
 

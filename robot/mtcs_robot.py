@@ -17,6 +17,8 @@ class MTCSRobot(object):
 
 
         self.board_size = 19
+        self.stone_number = self.board_size*self.board_size
+
         self.simulate_board_list = []
         self.max_play_move = 1024
         self.ColorBlackChar = 'b'
@@ -93,10 +95,10 @@ class MTCSRobot(object):
 
         is_valid, reason = self.go_board.apply_move(color, pos)
 
-        if not is_valid:
-            print ('# incorrect move:' + color + '  pos:' + str(pos) + '  Reason:' + str(reason))
-        else:
-            print ('#   correct move:' + color + '  pos:' + str(pos) + '                            ')
+        # if not is_valid:
+        #     print ('# incorrect move:' + color + '  pos:' + str(pos) + '  Reason:' + str(reason))
+        # else:
+        #     print ('#   correct move:' + color + '  pos:' + str(pos) + '                            ')
 
         # start_time = time.time()
         # self.board.update_score_board()
@@ -225,7 +227,7 @@ class MTCSRobot(object):
             # print('number of children of current node:' +str(len(current_node.children)))
             current_node.visit_count = current_node.visit_count + 1
             current_node.total_value = current_node.total_value + value
-            current_node.average_value = current_node.average_value/current_node.visit_count
+            current_node.average_value = current_node.average_value/current_node.visit_count/self.stone_number
             current_node.current_value = current_node.average_value
             return value
         
@@ -319,7 +321,7 @@ class MTCSRobot(object):
         current_node.is_leaf = False
         current_node.visit_count = current_node.visit_count + 1
         current_node.total_value = current_node.total_value + current_value
-        current_node.average_value = current_node.total_value/current_node.visit_count
+        current_node.average_value = current_node.total_value/current_node.visit_count/self.stone_number
         current_node.current_value = current_node.average_value
 
         return current_value
