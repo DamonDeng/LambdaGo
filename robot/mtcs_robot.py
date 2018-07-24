@@ -93,7 +93,11 @@ class MTCSRobot(object):
 
         for i in range(self.search_time):
             # node_visited = []
+            start_time = time.time()
             self.search_to_expand(root_node)
+            end_time = time.time()
+
+            print ('Search to Expand time:' + str(end_time - start_time))
 
             # print ('searching......, iter:' + str(i))
             # value = self.expand_mtcs_node(node_visited)
@@ -147,7 +151,15 @@ class MTCSRobot(object):
         else:
             if best_node.is_leaf:
                 # print('trying to expand node.' + str(best_node.move))
+
+                start_time = time.time()
+
                 value = self.expand_mtcs_node(best_node, current_node)
+
+                end_time = time.time()
+
+                print ('    node Expand time:' + str(end_time - start_time))
+
             else:
                 # print('searching into best child:' + str(best_node.move) + '.........................................')
                 value = self.search_to_expand(best_node)
@@ -200,7 +212,14 @@ class MTCSRobot(object):
         else:
             raise Exception('Incorrect color character')
 
+
+        predict_start_time = time.time()
+
         result = self.model.predict(current_data)
+
+        predict_end_time = time.time()
+
+        print ('                Predict time:' + str(predict_end_time - predict_start_time))
 
         policy_array = result[0][0]
 
@@ -210,6 +229,8 @@ class MTCSRobot(object):
 
         # # need to consider whether sorting this array helps to improve the mtcs searching speed.
         # move_and_policy_value.sort(key=lambda x:x[1], reverse=True)
+
+        simulate_start_time = time.time()
 
         for single_move_and_policy in move_and_policy_value:
             
@@ -227,6 +248,10 @@ class MTCSRobot(object):
                 new_child.move = move
                 new_child.policy_value = policy_value
                 current_node.children.append(new_child)
+
+        simulate_end_time = time.time()
+
+        print ('              Simulating time:' + str(simulate_end_time - simulate_start_time))
 
         current_node.is_leaf = False
         current_node.visit_count = current_node.visit_count + 1
