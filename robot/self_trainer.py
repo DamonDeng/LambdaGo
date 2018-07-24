@@ -137,6 +137,11 @@ class SelfTrainer(object):
 
                 print ('# trying to train 1')
                 self.student.train(board_states, move_sequence, score_board)
+            else:
+                print ('# reach max move, ignore this game')
+
+            self.student.reset()
+            self.teacher.reset()
                     
 
             both_pass, score, board_states, move_sequence, score_board = self.self_play(self.teacher, self.student)
@@ -151,6 +156,9 @@ class SelfTrainer(object):
 
                 print ('# trying to train 2')
                 self.student.train(board_states, move_sequence, score_board)
+
+            self.student.reset()
+            self.teacher.reset()
 
 
                     

@@ -27,30 +27,34 @@ class MTCSRobot(object):
 
         self.PosArray = []
 
-        self.root_node = MTCSNode()
-        self.root_node.is_root = True
-        self.root_node.is_leaf = True
-
         for row in range(self.board_size):
             for col in range(self.board_size):
                 self.PosArray.append((row, col))
 
         self.PosArray.append(None)
 
-        # init board_size*board_size of simulating board
-        for i in range (self.board_size*self.board_size):
-            self.simulate_board_list.append(GoBoard(self.board_size))
-
-        self.simulate_board = GoBoard(self.board_size)
-
-        self.go_board = GoBoard(self.board_size)
-
+        self.reset()
+        
         if old_model is None:
             self.model = DualHeadModel(self.name, self.board_size, layer_number=self.layer_number)
         else:
             print ('Trying to load old model for continue training:' + './model/' + old_model)
             self.model = DualHeadModel(self.name, self.board_size, model_path='./model/' + old_model, layer_number=self.layer_number)
-        
+
+    def reset(self):
+        self.root_node = MTCSNode()
+        self.root_node.is_root = True
+        self.root_node.is_leaf = True
+
+        self.training_data = []
+        self.training_score = []
+        self.training_move = []
+
+        self.simulate_board = GoBoard(self.board_size)
+
+        self.go_board = GoBoard(self.board_size)
+
+
 
     def reset_board(self):
         self.go_board.reset(self.board_size)
@@ -58,6 +62,32 @@ class MTCSRobot(object):
     def apply_move(self, color, pos):
 
         # print ('aplying move:' + color + ' in the position ' + str(pos))
+
+        current_data = []
+
+        current_board = self.go_board.board
+
+        current_data.append(current_board)
+
+        if GoBoard.get_color_value(color) == GoBoard.ColorBlack:
+            current_data.append(self.BlackIdentify)
+        elif GoBoard.get_color_value(color) == GoBoard.ColorWhite:
+            current_data.append(self.WhiteIdentify)
+        else:
+            raise Exception('Incorrect color character')
+
+        self.training_data.append(current_data)
+
+        if pos is None:
+            current_move = np.zeros((self.board_size*self.board_size+1), dtype=int)
+            current_move[self.board_size*self.board_size] = 1
+            self.training_move.append(current_move)
+        else:
+
+            (row, col) = pos
+            current_move = np.zeros((self.board_size*self.board_size+1), dtype=int)
+            current_move[row*self.board_size+col] = 1
+            self.training_move.append(current_move)
 
         self.go_board.apply_move(color, pos)
 
@@ -78,26 +108,29 @@ class MTCSRobot(object):
         self.root_node = MTCSNode()
 
         self.root_node.set_simulate_board(self.go_board)
-        self.root_node.player_color = GoBoard.get_color_value(color)
+        current_color = GoBoard.get_color_value(color)
+        # root node is the node before current player play the stone, 
+        # so the color of root node should be enemy color of current color
+        self.root_node.player_color = GoBoard.reverse_color_value(current_color)
         self.root_node.is_root = True
 
         self.expand_mtcs_node(self.root_node, None)
 
-        right_move = self.mcts_search(self.root_node)
+        right_move = self.mcts_search(self.root_node, color)
 
         return right_move
 
-    def mcts_search(self, root_node):
+    def mcts_search(self, root_node, color):
 
         right_move = (None, 0)
 
         for i in range(self.search_time):
             # node_visited = []
-            start_time = time.time()
+            # start_time = time.time()
             self.search_to_expand(root_node)
-            end_time = time.time()
+            # end_time = time.time()
 
-            print ('Search to Expand time:' + str(end_time - start_time))
+            # print ('Search to Expand time:' + str(end_time - start_time))
 
             # print ('searching......, iter:' + str(i))
             # value = self.expand_mtcs_node(node_visited)
@@ -105,7 +138,24 @@ class MTCSRobot(object):
 
         right_node = self.lookup_right_node(self.root_node)
 
-        right_move = (right_node.move, right_node.current_value)
+        right_move = (right_node.move, right_node.get_value())
+
+        display_string = "# Player: "
+        if GoBoard.get_color_value(color) == GoBoard.ColorBlack:
+            display_string = display_string + "Black    "
+        else:
+            display_string = display_string + "White    "
+        
+        move_string = ' Move:' + str(right_move[0]) + '                   '
+        value_string = ' Value:' + str(right_move[1]) + '                    '
+        visit_count_string = '    Count:' + str(right_node.visit_count) + '                     '
+        node_value_string = '   NodeValue:' + str(right_node.current_value) + '                    '
+        policy_value_string = '   Policy:' + str(right_node.policy_value) + '                     '
+
+        display_string = display_string + move_string[0:20] + visit_count_string[0:20]
+        display_string = display_string + value_string[0:25] + node_value_string[0:25] + policy_value_string[0:25]
+
+        print (display_string)
 
         # print ('Found right move:' + str(right_move[0]) + 'with value:' + str(right_move[1]))
         # print ('Visited count: ' + str(right_node.visit_count))
@@ -152,13 +202,13 @@ class MTCSRobot(object):
             if best_node.is_leaf:
                 # print('trying to expand node.' + str(best_node.move))
 
-                start_time = time.time()
+                # start_time = time.time()
 
                 value = self.expand_mtcs_node(best_node, current_node)
 
-                end_time = time.time()
+                # end_time = time.time()
 
-                print ('    node Expand time:' + str(end_time - start_time))
+                # print ('    node Expand time:' + str(end_time - start_time))
 
             else:
                 # print('searching into best child:' + str(best_node.move) + '.........................................')
@@ -199,8 +249,9 @@ class MTCSRobot(object):
         #     current_node.simulate_board.apply_move(GoBoard.get_color_char(current_color), current_node.move)
 
         current_color = current_node.player_color
+        child_color = GoBoard.reverse_color_value(current_color)
 
-        current_data_list = []
+        # current_data_list = []
 
         current_data = []
 
@@ -214,16 +265,16 @@ class MTCSRobot(object):
         else:
             raise Exception('Incorrect color character')
 
-        for i in range(361):
-            current_data_list.append(current_data)
+        # for i in range(361):
+        #     current_data_list.append(current_data)
 
-        predict_start_time = time.time()
+        # predict_start_time = time.time()
 
-        result = self.model.predict(current_data_list)
+        result = self.model.predict(current_data)
 
-        predict_end_time = time.time()
+        # predict_end_time = time.time()
 
-        print ('                Predict time:' + str(predict_end_time - predict_start_time))
+        # print ('                Predict time:' + str(predict_end_time - predict_start_time))
 
         policy_array = result[0][0]
 
@@ -234,7 +285,7 @@ class MTCSRobot(object):
         # # need to consider whether sorting this array helps to improve the mtcs searching speed.
         # move_and_policy_value.sort(key=lambda x:x[1], reverse=True)
 
-        simulate_start_time = time.time()
+        # simulate_start_time = time.time()
 
         for single_move_and_policy in move_and_policy_value:
             
@@ -251,11 +302,12 @@ class MTCSRobot(object):
             if is_valid:
                 new_child.move = move
                 new_child.policy_value = policy_value
+                new_child.player_color = child_color
                 current_node.children.append(new_child)
 
-        simulate_end_time = time.time()
+        # simulate_end_time = time.time()
 
-        print ('              Simulating time:' + str(simulate_end_time - simulate_start_time))
+        # print ('              Simulating time:' + str(simulate_end_time - simulate_start_time))
 
         current_node.is_leaf = False
         current_node.visit_count = current_node.visit_count + 1
@@ -282,122 +334,6 @@ class MTCSRobot(object):
                     most_visited_node = child
 
         return most_visited_node          
-            
-
-        # print (move_and_policy_value)
-
-
-        # move_and_result = {}
-
-        # forbidden_moves = []
-
-        # # time debug for prediction
-        # # start_time = time.time()
-
-        # for row in range(self.board_size):
-        #     for col in range(self.board_size):
-        #         if self.go_board.is_empty((row, col)):
-        #             board_index = row*self.board_size + col
-        #             self.simulate_board_list[board_index].copy_from(self.go_board)
-        #             is_valid, reason = self.simulate_board_list[board_index].apply_move(color, (row,col))
-        #             if is_valid == True:
-        #                 if pos_filter != None:
-        #                     if not (row, col) in pos_filter:
-        #                         move_and_result[(row, col)] = self.simulate_board_list[board_index]
-        #                 else:
-        #                     move_and_result[(row, col)] = self.simulate_board_list[board_index]
-        #             else:
-        #                 if reason == self.go_board.MoveResult_IsKo or \
-        #                    reason == self.go_board.MoveResult_IsSuicide or \
-        #                    reason == self.go_board.MoveResult_SolidEye:
-        #                     forbidden_moves.append((row, col))
-
-        # all_moves = move_and_result.keys()
-
-        # right_move = (None, 0)
-
-        # best_move_is_lossing = False
-
-        # if len(all_moves) <= 0:
-        #     # no available move left, just return PASS, and current score board sum as value
-        #     if not self.go_board.score_board_updated:
-        #         self.go_board.update_score_board()
-
-        #     right_move = (None, self.go_board.score_board_sum)
-
-        #     return right_move, forbidden_moves
-        # else:
-        #     # selected_move = all_moves[0]
-        #     input_states = []
-        #     input_pos = []
-        #     for pos in all_moves:
-
-        #         temp_board = move_and_result.get(pos)
-        #         # temp_board.update_score_board()
-
-        #         input_states.append(temp_board.board)
-        #         # input_score.append(temp_board.score_board_sum)
-        #         input_pos.append(pos)
-
-        #     # time debug for prediction
-        #     start_time = time.time()
-
-        #     predict_result = self.model.predict(input_states)
-
-        #     # time debug for prediction
-        #     # end_time = time.time()
-        #     # print('# time used for prediction:' + str(end_time - start_time) + '         ')
-
-        #     move_and_predict = zip(input_pos, predict_result)
-
-            
-        #     move_and_predict.sort(key=lambda x:x[1], reverse=True)
-
-        #     color_value = self.go_board.get_color_value(color)
-
-        #     if color_value == self.go_board.ColorBlack:
-        #         print ('# black top move:' + str(move_and_predict[0][0]) + ' with prediction:' + str(move_and_predict[0][1]) + '         ')
-
-        #         if move_and_predict[0][1] > self.komi:
-        #             right_move = move_and_predict[0]
-        #             best_move_is_lossing = False
-        #         else:
-        #             right_move = move_and_predict[0]
-        #             best_move_is_lossing = True
-                    
-        #     elif color_value == self.go_board.ColorWhite:
-        #         print ('# white top move:' + str(move_and_predict[-1][0]) + ' with prediction:' + str(move_and_predict[-1][1]) + '         ')
-
-        #         if move_and_predict[-1][1] < self.komi:
-        #             right_move = move_and_predict[-1]
-        #             best_move_is_lossing = False
-        #         else:
-        #             right_move = move_and_predict[-1]
-        #             best_move_is_lossing = True
-
-        #     # print ('# right move:' + str(right_move[0]) + ' with valueprediction:' + str(right_move[1]) + '       ')
-
-        # if not best_move_is_lossing:
-        #     print ('#----not----lossing-----')
-        #     print ('#                                                                     ')
-                   
-        #     return right_move, forbidden_moves
-
-        # print ('#-lossing---------------')
-
-
-        # # just using random selection while it is lossing:
-
-        
-
-        # random_int = random.randint(0, len(move_and_predict)-1)
-
-        # right_move = move_and_predict[random_int]
-
-        # print ('# random move:' + str(right_move[0]) + ' with prediction:' + str(right_move[1]) + '    ')
-        
-
-        # return right_move
 
 
     def select_move(self, color):
@@ -414,7 +350,22 @@ class MTCSRobot(object):
         
     def train(self, board_states, move_sequence, score_board):
 
-        print ('# pretent to be in training state....')
+        train_data_len = len(self.training_data)
+        train_move_len = len(self.training_move)
+
+        if not train_data_len == train_move_len:
+            raise Exception('Inconsist state, training data and training move not in same length')
+
+        self.go_board.update_score_board()
+
+        result_score = self.go_board.score_board
+
+        for i in range(train_data_len):
+            self.training_score.append(result_score)
+
+        print ('# robot ' + self.name + ' is in training.........')
+
+        self.model.train(self.training_data, self.training_score, self.training_move, steps=20)
 
     def new_game(self):
         self.reset_board()

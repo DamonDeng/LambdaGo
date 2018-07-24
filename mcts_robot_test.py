@@ -6,12 +6,12 @@ import sys
 def start_self_train(res_layer_number=19, steps=100, old_model=None):
 
     if old_model is None:
-        teacher_model = MTCSRobot(layer_number=res_layer_number)
-        student_model = MTCSRobot(layer_number=res_layer_number)
+        teacher_model = MTCSRobot(name='teacher', layer_number=res_layer_number)
+        student_model = MTCSRobot(name='student', layer_number=res_layer_number)
         test_trainer = SelfTrainer(teacher_model, student_model, layer_number=res_layer_number)
     else:
-        teacher_model = MTCSRobot(layer_number=res_layer_number, old_model=old_model)
-        student_model = MTCSRobot(layer_number=res_layer_number, old_model=old_model)
+        teacher_model = MTCSRobot(name='teacher', layer_number=res_layer_number, old_model=old_model)
+        student_model = MTCSRobot(name='student', layer_number=res_layer_number, old_model=old_model)
         test_trainer = SelfTrainer(teacher_model, student_model, layer_number=res_layer_number)
 
     test_trainer.self_train(steps)

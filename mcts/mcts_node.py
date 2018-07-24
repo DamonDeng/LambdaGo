@@ -26,7 +26,7 @@ class MTCSNode(object):
 
         self.is_leaf = True
 
-        self.player_color = GoBoard.ColorBlack
+        self.player_color = GoBoard.ColorWhite
 
     def set_simulate_board(self, current_board):
         self.simulate_board = GoBoard(current_board.board_size)
