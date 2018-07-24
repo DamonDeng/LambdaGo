@@ -239,12 +239,18 @@ class MTCSRobot(object):
     def lookup_right_node(self, current_node):
 
         most_visited_count = -1
+        best_policy = -1
         most_visited_node = None
 
         for child in current_node.children:
             if child.visit_count > most_visited_count:
                 most_visited_count = child.visit_count
+                best_policy = child.policy_value
                 most_visited_node = child
+            elif child.visit_count == most_visited_count:
+                if child.policy_value > best_policy:
+                    best_policy = child.policy_value
+                    most_visited_node = child
 
         return most_visited_node          
             
