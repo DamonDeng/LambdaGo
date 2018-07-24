@@ -34,6 +34,7 @@ def main(argv):
         else:
             start_self_train(res_layer_number=int(argv[1]), steps=int(argv[2]), old_model=argv[3], mcts_search_time=int(argv[4]))
 
+    print ('End of the program')
 
 if __name__ == '__main__':
     main(sys.argv)
