@@ -106,7 +106,7 @@ class MTCSRobot(object):
         # print ('Found right move:' + str(right_move[0]) + 'with value:' + str(right_move[1]))
         # print ('Visited count: ' + str(right_node.visit_count))
 
-        time.sleep(5)
+        # time.sleep(5)
 
         return right_move
 
