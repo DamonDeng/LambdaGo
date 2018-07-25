@@ -171,7 +171,7 @@ class MTCSRobot(object):
             print ('# ')
             print (display_string)
 
-        if abs(right_node.average_value) >= 1:
+        if abs(right_node.average_value) > 1:
             print('# incorrect node:')
             print (str(right_node))
             time.sleep(20)
