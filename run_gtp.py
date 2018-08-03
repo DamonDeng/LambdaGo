@@ -7,8 +7,8 @@ from sys import argv
 
 from gtp import GTPFrontend
 
-from go_core.goboard import GoBoard
-from robot.simple_robot import SimpleRobot
+# from go_core.goboard import GoBoard
+from robot.delta_robot import SimpleRobot
 
 
 
@@ -18,6 +18,6 @@ frontend = GTPFrontend(bot=test_robot)
 
 frontend.run()
 
-frontend = GTPFrontend(bot=test_robot)
+# frontend = GTPFrontend(bot=test_robot)
 
-frontend.run()
+# frontend.run()

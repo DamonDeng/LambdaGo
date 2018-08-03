@@ -8,7 +8,10 @@ import random
 
 class SelfTrainer(object):
 
-    def __init__(self, teacher_model, student_model, layer_number=19):
+    SwitchThreadhold = 0.8
+    MinPlayTime = 10
+
+    def __init__(self, teacher_robot, student_robot, layer_number=19):
 
         self.layer_number = layer_number
 
@@ -22,13 +25,16 @@ class SelfTrainer(object):
 
         self.komi = 7.5
 
+        self.upgrade_times = 0
+
         self.reset_statistic()
 
         # use current time as prefix of saved model
         self.prefix = str(time.strftime("%Y_%m_%d_%H_%M",time.localtime(time.time())))
+        self.model_dir = './model/'
 
-        self.teacher = teacher_model
-        self.student = student_model
+        self.teacher = teacher_robot
+        self.student = student_robot
 
     def reset_statistic(self):
         self.train_iter = 0
@@ -39,6 +45,7 @@ class SelfTrainer(object):
         self.student_win_as_black = 0
         self.student_win_as_white = 0
         self.different_score_times = 0
+        self.game_played = 0
 
         
 
@@ -119,7 +126,7 @@ class SelfTrainer(object):
 
         self.reset_statistic()
 
-        for i in range(iter_number):
+        while self.upgrade_times < iter_number:
 
             self.train_iter = self.train_iter + 1
 
@@ -143,6 +150,7 @@ class SelfTrainer(object):
             else:
                 print ('# reach max move, ignore this game')
 
+            self.game_played = self.game_played + 1
             self.student.reset()
             self.teacher.reset()
                     
@@ -162,15 +170,33 @@ class SelfTrainer(object):
             else:
                 print ('# reach max move, ignore this game')
 
+            self.game_played = self.game_played + 1
             self.student.reset()
             self.teacher.reset()
+
+            win_percentage = (self.student_win_as_black + self.student_win_as_white)/self.game_played
+
+            if self.game_played > self.MinPlayTime and win_percentage > self.SwitchThreadhold:
+                # student win enough times, 
+                # going to switch the model of student to teacher
+
+                self.reset_statistic()
+
+                model_path = self.model_dir + self.prefix + '__' + str(self.upgrade_times)
+
+                self.student.save_model(model_path)
+                self.teacher.load_model(model_path)
+
+                self.upgrade_times = self.upgrade_times + 1
+
+                
 
 
                     
     def print_train_title(self): 
         # moving the cursor to up left corner
         print('\x1b[0;0f')
-        print ('# Self Train::::  Iter:' + str(self.train_iter))
+        print ('# Self Train::::  Teacher upgrade times:' + str(self.upgrade_times) +'  Current iter:' + str(self.train_iter))
         print ('# Black Win:' + str(self.black_win_times) + '       White Win:' + str(self.white_win_times))
         print ('# Black Win as student:' + str(self.student_win_as_black) + '       White Win as teacher:' + str(self.teacher_win_as_white))
         print ('# Black Win as teacher:' + str(self.teacher_win_as_black) + '       White Win as student:' + str(self.student_win_as_white))

@@ -28,9 +28,15 @@ class SimpleRobot(object):
         if old_model is None:
             self.model = TensorModel(self.name, self.board_size, layer_number=self.layer_number)
         else:
-            print ('Trying to load old model for continue training:' + './model/' + old_model)
-            self.model = TensorModel(self.name, self.board_size, model_path='./model/' + old_model, layer_number=self.layer_number)
+            print ('Trying to load old model for continue training:' + old_model)
+            self.model = TensorModel(self.name, self.board_size, model_path=old_model, layer_number=self.layer_number)
         
+    def reset(self):
+        # init board_size*board_size of simulating board
+        for i in range (self.board_size*self.board_size):
+            self.simulate_board_list.append(GoBoard(self.board_size))
+
+        self.go_board = GoBoard(self.board_size)
 
     def reset_board(self):
         self.go_board.reset(self.board_size)
@@ -52,8 +58,7 @@ class SimpleRobot(object):
         return str(self.go_board)
 
 
-
-    def simulate_best_move(self, color, pos_filter=None):
+    def simulate_all_move(self, color, pos_filter=None):
         move_and_result = {}
 
         forbidden_moves = []
@@ -78,6 +83,12 @@ class SimpleRobot(object):
                            reason == self.go_board.MoveResult_IsSuicide or \
                            reason == self.go_board.MoveResult_SolidEye:
                             forbidden_moves.append((row, col))
+        
+        return move_and_result, forbidden_moves
+
+
+    def simulate_best_move(self, color, pos_filter=None):
+        move_and_result , forbidden_moves = self.simulate_all_move(color)
 
         all_moves = move_and_result.keys()
 
@@ -91,6 +102,11 @@ class SimpleRobot(object):
                 self.go_board.update_score_board()
 
             right_move = (None, self.go_board.score_board_sum)
+
+            # best_move_is_lossing = False
+            lossing_right_move = (None, 0)
+
+            self.display_result(color, right_move, best_move_is_lossing, lossing_right_move)
 
             return right_move, forbidden_moves
         else:
@@ -107,7 +123,7 @@ class SimpleRobot(object):
                 input_pos.append(pos)
 
             # time debug for prediction
-            start_time = time.time()
+            # start_time = time.time()
 
             predict_result = self.model.predict(input_states)
 
@@ -123,7 +139,7 @@ class SimpleRobot(object):
             color_value = self.go_board.get_color_value(color)
 
             if color_value == self.go_board.ColorBlack:
-                print ('# black top move:' + str(move_and_predict[0][0]) + ' with prediction:' + str(move_and_predict[0][1]) + '         ')
+                # print ('# black top move:' + str(move_and_predict[0][0]) + ' with prediction:' + str(move_and_predict[0][1]) + '         ')
 
                 if move_and_predict[0][1] > self.komi:
                     right_move = move_and_predict[0]
@@ -133,7 +149,7 @@ class SimpleRobot(object):
                     best_move_is_lossing = True
                     
             elif color_value == self.go_board.ColorWhite:
-                print ('# white top move:' + str(move_and_predict[-1][0]) + ' with prediction:' + str(move_and_predict[-1][1]) + '         ')
+                # print ('# white top move:' + str(move_and_predict[-1][0]) + ' with prediction:' + str(move_and_predict[-1][1]) + '         ')
 
                 if move_and_predict[-1][1] < self.komi:
                     right_move = move_and_predict[-1]
@@ -144,27 +160,103 @@ class SimpleRobot(object):
 
             # print ('# right move:' + str(right_move[0]) + ' with valueprediction:' + str(right_move[1]) + '       ')
 
-        if not best_move_is_lossing:
-            print ('#----not----lossing-----')
-            print ('#                                                                     ')
-                   
+        lossing_right_move = (None, 0)
+
+        if best_move_is_lossing:
+            # if best move of current color is lossing, 
+            # try to get the best move of enemy and occupy it to block the best move of enemy
+
+            enemy_color = GoBoard.other_color(color)
+
+            lossing_move_and_result , lossing_forbidden_moves = self.simulate_all_move(enemy_color, forbidden_moves)
+
+            lossing_all_moves = lossing_move_and_result.keys()
+
+            if len(lossing_all_moves) <= 0:
+                # none of the enemy moves can be used.
+                # set the best_move_is_lossing back to False, to use the best one current player has
+                best_move_is_lossing = False
+            else:
+                input_states = []
+                input_pos = []
+                for pos in lossing_all_moves:
+
+                    temp_board = lossing_move_and_result.get(pos)
+                    # temp_board.update_score_board()
+
+                    input_states.append(temp_board.board)
+                    # input_score.append(temp_board.score_board_sum)
+                    input_pos.append(pos)
+
+                # time debug for prediction
+                # start_time = time.time()
+
+                predict_result = self.model.predict(input_states)
+
+                # time debug for prediction
+                # end_time = time.time()
+                # print('# time used for prediction:' + str(end_time - start_time) + '         ')
+
+                move_and_predict = zip(input_pos, predict_result)
+
+                
+                move_and_predict.sort(key=lambda x:x[1], reverse=True)
+
+                enemy_color_value = self.go_board.get_color_value(enemy_color)
+
+                if enemy_color_value == self.go_board.ColorBlack:
+                    lossing_right_move = move_and_predict[0]
+                    
+                        
+                elif enemy_color_value == self.go_board.ColorWhite: 
+                    lossing_right_move = move_and_predict[-1]
+                    
+
+        
+        self.display_result(color, right_move, best_move_is_lossing, lossing_right_move)
+        
+        
+        if best_move_is_lossing:
+            return lossing_right_move, forbidden_moves
+        else:
             return right_move, forbidden_moves
 
-        print ('#-lossing---------------')
-
-
-        # just using random selection while it is lossing:
-
+    
+    def display_result(self, color, right_move, best_move_is_lossing, lossing_right_move):
+        display_string = "# Player: "
+        if GoBoard.get_color_value(color) == GoBoard.ColorBlack:
+            display_string = display_string + "Black    "
+        else:
+            display_string = display_string + "White    "
         
+        move_string = ' Move:' + str(right_move[0]) + '                   '
+        value_string = ' Value:' + str(right_move[1]) + '                    '
+        # visit_count_string = '    Count:' + str(right_node.visit_count) + '                     '
+        # node_value_string = '   NodeValue:' + str(right_node.average_value) + '                    '
+        # policy_value_string = '   Policy:' + str(right_node.policy_value) + '                     '
 
-        random_int = random.randint(0, len(move_and_predict)-1)
+        lossing_move_string = ' Move:                                                '
+        lossing_value_string = ' Value:                                              '
 
-        right_move = move_and_predict[random_int]
+        if best_move_is_lossing:
+            lossing_string = '--Lossing-------------      '
+            lossing_move_string = ' Move:' + str(lossing_right_move[0]) + '                   '
+            lossing_value_string = ' Value:' + str(lossing_right_move[1]) + '                    '
+        else:
+            lossing_string = '-----Not-----Lossing--      '
 
-        print ('# random move:' + str(right_move[0]) + ' with prediction:' + str(right_move[1]) + '    ')
-        
+        display_string = display_string + move_string[0:20] + value_string[0:25] 
+        display_string = display_string + lossing_string  + lossing_move_string[0:20] + lossing_value_string[0:25] 
+        # display_string = display_string + visit_count_string[0:20]
+        # display_string = display_string + value_string[0:25] + node_value_string[0:25] + policy_value_string[0:25]
 
-        return right_move, forbidden_moves
+        if GoBoard.get_color_value(color) == GoBoard.ColorBlack:
+            print (display_string)
+            print ('# ')
+        else:
+            print ('# ')
+            print (display_string)
+
 
 
     def select_move(self, color):
@@ -181,7 +273,16 @@ class SimpleRobot(object):
         
     def train(self, board_states, move_sequence, score_board):
 
-        print ('# pretent to be in training state....')
+        print (' Startined to train the model')
+
+        training_length = len(board_states)
+
+        training_y = []
+
+        for i in range(training_length):
+            training_y.append(score_board)
+
+        self.model.train(board_states, training_y, steps=10)
 
     def new_game(self):
         self.reset_board()
@@ -206,5 +307,12 @@ class SimpleRobot(object):
             self.go_board.update_score_board()
         
         return self.go_board.score_board_sum
+
+
+    def save_model(self, model_path):
+        self.model.save_model(model_path)
+
+    def load_model(self, model_path):
+        self.model.load_model(model_path)
 
 
