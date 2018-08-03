@@ -148,12 +148,29 @@ class SelfTrainer(object):
 
                 print ('# Both pass, trying to train student as black.')
                 self.student.train(board_states, move_sequence, score_board)
+                self.teacher.train(board_states, move_sequence, score_board)
+                
             else:
                 print ('# reach max move, ignore this game')
 
             self.game_played = self.game_played + 1
             self.student.reset()
             self.teacher.reset()
+            self.win_percentage = float(self.student_win_as_black + self.student_win_as_white)/self.game_played
+
+            if self.game_played > self.MinPlayTime and self.win_percentage > self.SwitchThreadhold:
+                # student win enough times, 
+                # going to switch the model of student to teacher
+
+                self.reset_statistic()
+
+                model_path = self.model_dir + self.prefix + '__' + str(self.upgrade_times)
+
+                self.student.save_model(model_path)
+                self.teacher.load_model(model_path)
+
+                self.upgrade_times = self.upgrade_times + 1
+
                     
             self.current_black_player = 'teacher'
             both_pass, score, board_states, move_sequence, score_board = self.self_play(self.teacher, self.student)
@@ -168,6 +185,7 @@ class SelfTrainer(object):
 
                 print ('# Both pass, trying to train student as white.')
                 self.student.train(board_states, move_sequence, score_board)
+                self.teacher.train(board_states, move_sequence, score_board)
             else:
                 print ('# reach max move, ignore this game')
 
