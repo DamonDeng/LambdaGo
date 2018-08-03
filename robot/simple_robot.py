@@ -19,11 +19,15 @@ class SimpleRobot(object):
 
         self.komi = 7.5
 
-        # init board_size*board_size of simulating board
-        for i in range (self.board_size*self.board_size):
-            self.simulate_board_list.append(GoBoard(self.board_size))
+        # self.for_repeat_move = [(-1, -1), (-2, -2), (-3, -3), (-4, -4), (-5, -5), (-6, -6)]
 
-        self.go_board = GoBoard(self.board_size)
+        # # init board_size*board_size of simulating board
+        # for i in range (self.board_size*self.board_size):
+        #     self.simulate_board_list.append(GoBoard(self.board_size))
+
+        # self.go_board = GoBoard(self.board_size)
+
+        self.reset()
 
         if old_model is None:
             self.model = TensorModel(self.name, self.board_size, layer_number=self.layer_number)
@@ -32,6 +36,9 @@ class SimpleRobot(object):
             self.model = TensorModel(self.name, self.board_size, model_path=old_model, layer_number=self.layer_number)
         
     def reset(self):
+        
+        self.for_repeat_move = [(-1, -1), (-2, -2), (-3, -3), (-4, -4), (-5, -5), (-6, -6)]
+
         # init board_size*board_size of simulating board
         for i in range (self.board_size*self.board_size):
             self.simulate_board_list.append(GoBoard(self.board_size))
@@ -46,12 +53,27 @@ class SimpleRobot(object):
         # print ('aplying move:' + color + ' in the position ' + str(pos))
 
         self.go_board.apply_move(color, pos)
+        self.record_repeat(pos)
 
         # start_time = time.time()
         # self.board.update_score_board()
         # end_time = time.time()
         # print ('total update time:' + str(end_time - start_time))
         # print(str(self.board))
+
+    def record_repeat(self, pos):
+        self.for_repeat_move.append(pos)
+        self.for_repeat_move.pop(0)
+
+    def is_repeating(self):
+        if self.for_repeat_move[5] == self.for_repeat_move[2] and \
+            self.for_repeat_move[4] == self.for_repeat_move[1] and \
+            self.for_repeat_move[3] == self.for_repeat_move[0]:
+
+            return True
+            
+        else:
+            return False
 
     def showboard(self):
         self.go_board.update_score_board()
@@ -140,22 +162,28 @@ class SimpleRobot(object):
 
             if color_value == self.go_board.ColorBlack:
                 # print ('# black top move:' + str(move_and_predict[0][0]) + ' with prediction:' + str(move_and_predict[0][1]) + '         ')
+                right_move = move_and_predict[0]
+
+                # if the robot is repeating in three ko, select the second one
+                if self.is_repeating() and len(move_and_predict) > 1:
+                    right_move = move_and_predict[1]
 
                 if move_and_predict[0][1] > self.komi:
-                    right_move = move_and_predict[0]
                     best_move_is_lossing = False
                 else:
-                    right_move = move_and_predict[0]
                     best_move_is_lossing = True
                     
             elif color_value == self.go_board.ColorWhite:
                 # print ('# white top move:' + str(move_and_predict[-1][0]) + ' with prediction:' + str(move_and_predict[-1][1]) + '         ')
+                right_move = move_and_predict[-1]
+
+                # if the robot is repeating in three ko, select the second one
+                if self.is_repeating() and len(move_and_predict) > 1:
+                    right_move = move_and_predict[-2]
 
                 if move_and_predict[-1][1] < self.komi:
-                    right_move = move_and_predict[-1]
                     best_move_is_lossing = False
                 else:
-                    right_move = move_and_predict[-1]
                     best_move_is_lossing = True
 
             # print ('# right move:' + str(right_move[0]) + ' with valueprediction:' + str(right_move[1]) + '       ')
@@ -206,10 +234,16 @@ class SimpleRobot(object):
 
                 if enemy_color_value == self.go_board.ColorBlack:
                     lossing_right_move = move_and_predict[0]
+
+                    if self.is_repeating() and len(lossing_move_and_result) > 1:
+                        lossing_right_move = move_and_predict[1]
                     
                         
                 elif enemy_color_value == self.go_board.ColorWhite: 
                     lossing_right_move = move_and_predict[-1]
+
+                    if self.is_repeating() and len(lossing_move_and_result) > 1:
+                        lossing_right_move = move_and_predict[-2]
                     
 
         
