@@ -25,7 +25,8 @@ class SelfTrainer(object):
 
         self.komi = 7.5
 
-        self.upgrade_times = 0
+        self.student_upgrade_times = 0
+        self.teacher_upgrade_times = 0
 
         self.reset_statistic()
 
@@ -46,7 +47,8 @@ class SelfTrainer(object):
         self.student_win_as_white = 0
         self.different_score_times = 0
         self.game_played = 0
-        self.win_percentage = 0
+        self.student_win_percentage = 0
+        self.teacher_win_percentage = 0
 
         
 
@@ -127,7 +129,7 @@ class SelfTrainer(object):
 
         self.reset_statistic()
 
-        while self.upgrade_times < iter_number:
+        while self.student_upgrade_times < iter_number and self.teacher_upgrade_times < iter_number:
 
             self.train_iter = self.train_iter + 1
 
@@ -156,20 +158,8 @@ class SelfTrainer(object):
             self.game_played = self.game_played + 1
             self.student.reset()
             self.teacher.reset()
-            self.win_percentage = float(self.student_win_as_black + self.student_win_as_white)/self.game_played
 
-            if self.game_played > self.MinPlayTime and self.win_percentage > self.SwitchThreadhold:
-                # student win enough times, 
-                # going to switch the model of student to teacher
-
-                self.reset_statistic()
-
-                model_path = self.model_dir + self.prefix + '__' + str(self.upgrade_times)
-
-                self.student.save_model(model_path)
-                self.teacher.load_model(model_path)
-
-                self.upgrade_times = self.upgrade_times + 1
+            self.upgrade_if_necessary()
 
                     
             self.current_black_player = 'teacher'
@@ -193,36 +183,52 @@ class SelfTrainer(object):
             self.student.reset()
             self.teacher.reset()
 
-            self.win_percentage = float(self.student_win_as_black + self.student_win_as_white)/self.game_played
+            self.upgrade_if_necessary()
 
-            
+                
+    def upgrade_if_necessary(self):
+        self.student_win_percentage = float(self.student_win_as_black + self.student_win_as_white)/self.game_played
+        self.teacher_win_percentage = float(self.teacher_win_as_black + self.teacher_win_as_white)/self.game_played
 
-            if self.game_played > self.MinPlayTime and self.win_percentage > self.SwitchThreadhold:
+        if self.game_played > self.MinPlayTime:
+            if self.student_win_percentage > self.SwitchThreadhold:
                 # student win enough times, 
                 # going to switch the model of student to teacher
 
                 self.reset_statistic()
 
-                model_path = self.model_dir + self.prefix + '__' + str(self.upgrade_times)
+                model_path = self.model_dir + self.prefix + '__s__' + str(self.teacher_upgrade_times)
 
                 self.student.save_model(model_path)
                 self.teacher.load_model(model_path)
 
-                self.upgrade_times = self.upgrade_times + 1
+                self.teacher_upgrade_times = self.teacher_upgrade_times + 1
+            elif self.teacher_win_percentage > self.SwitchThreadhold:
+                # student win enough times, 
+                # going to switch the model of student to teacher
 
-                
+                self.reset_statistic()
 
+                model_path = self.model_dir + self.prefix + '__t__' + str(self.student_upgrade_times)
+
+                self.teacher.save_model(model_path)
+                self.student.load_model(model_path)
+
+                self.student_upgrade_times = self.student_upgrade_times + 1
 
                     
     def print_train_title(self): 
         # moving the cursor to up left corner
         print('\x1b[0;0f')
-        print ('# Self Train::::  Teacher upgrade times:' + str(self.upgrade_times) +'  Current iter:' + str(self.train_iter))
+        print ('# Self Train::::  Teacher upgrade:' + str(self.teacher_upgrade_times) +'   Student upgrade:' + str(self.student_upgrade_times) +'  Current iter:' + str(self.train_iter))
 
         win_string = '# Black Win:' + str(self.black_win_times) + '      White Win:' + str(self.white_win_times) 
         win_string = win_string + '      Student Win:' + str(self.student_win_as_black + self.student_win_as_white)
+        win_string = win_string + '      Teacher Win:' + str(self.teacher_win_as_black + self.teacher_win_as_white)
+        win_string = win_string + '      StudentWinPercentage:' + str(self.student_win_percentage)
+        win_string = win_string + '      TeacherWinPercentage:' + str(self.teacher_win_percentage)
         win_string = win_string + '      GamePlayed:' + str(self.game_played)
-        win_string = win_string + '      WinPercentage:' + str(self.win_percentage)
+        
         print (win_string)
         print ('# Black Win as student:' + str(self.student_win_as_black) + '       White Win as teacher:' + str(self.teacher_win_as_white))
         print ('# Black Win as teacher:' + str(self.teacher_win_as_black) + '       White Win as student:' + str(self.student_win_as_white))
