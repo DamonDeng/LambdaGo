@@ -175,7 +175,9 @@ class SelfTrainer(object):
             self.student.reset()
             self.teacher.reset()
 
-            self.win_percentage = (self.student_win_as_black + self.student_win_as_white)/self.game_played
+            self.win_percentage = float(self.student_win_as_black + self.student_win_as_white)/self.game_played
+
+            
 
             if self.game_played > self.MinPlayTime and self.win_percentage > self.SwitchThreadhold:
                 # student win enough times, 
@@ -199,10 +201,10 @@ class SelfTrainer(object):
         print('\x1b[0;0f')
         print ('# Self Train::::  Teacher upgrade times:' + str(self.upgrade_times) +'  Current iter:' + str(self.train_iter))
 
-        win_string = '# Black Win:' + str(self.black_win_times) + '       White Win:' + str(self.white_win_times) 
-        win_string = win_string + '   Student Win:' + str(self.student_win_as_black + self.student_win_as_white)
-        win_string = win_string + '  GamePlayed:' + str(self.game_played)
-        win_string = win_string + '  WinPercentage:' + str(self.win_percentage)
+        win_string = '# Black Win:' + str(self.black_win_times) + '      White Win:' + str(self.white_win_times) 
+        win_string = win_string + '      Student Win:' + str(self.student_win_as_black + self.student_win_as_white)
+        win_string = win_string + '      GamePlayed:' + str(self.game_played)
+        win_string = win_string + '      WinPercentage:' + str(self.win_percentage)
         print (win_string)
         print ('# Black Win as student:' + str(self.student_win_as_black) + '       White Win as teacher:' + str(self.teacher_win_as_white))
         print ('# Black Win as teacher:' + str(self.teacher_win_as_black) + '       White Win as student:' + str(self.student_win_as_white))
