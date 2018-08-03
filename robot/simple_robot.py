@@ -318,6 +318,20 @@ class SimpleRobot(object):
 
         self.model.train(board_states, training_y, steps=10)
 
+        reverse_training_states = []
+        reverse_training_y = []
+
+        reverse_score_board = -score_board
+
+        for i in range(training_length):
+            reverse_training_states.append( -board_states[i])
+            reverse_training_y.append(reverse_score_board)
+
+        self.model.train(reverse_training_states, reverse_training_y, steps=10)
+
+
+
+
     def new_game(self):
         self.reset_board()
 
