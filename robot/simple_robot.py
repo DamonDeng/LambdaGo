@@ -37,7 +37,7 @@ class SimpleRobot(object):
         
     def reset(self):
         
-        self.for_repeat_move = [(-1, -1), (-2, -2), (-3, -3), (-4, -4), (-5, -5), (-6, -6)]
+        self.for_repeat_move = [(-1, -1), (-2, -2), (-3, -3), (-4, -4), (-5, -5), (-6, -6), (-7, -7), (-8, -8)]
 
         # init board_size*board_size of simulating board
         for i in range (self.board_size*self.board_size):
@@ -72,6 +72,13 @@ class SimpleRobot(object):
 
             return True
             
+        elif self.for_repeat_move[7] == self.for_repeat_move[3] and \
+            self.for_repeat_move[6] == self.for_repeat_move[2] and \
+            self.for_repeat_move[5] == self.for_repeat_move[1] and \
+            self.for_repeat_move[4] == self.for_repeat_move[0]:
+
+            return True
+
         else:
             return False
 
@@ -257,11 +264,11 @@ class SimpleRobot(object):
 
     
     def display_result(self, color, right_move, best_move_is_lossing, lossing_right_move):
-        display_string = "# Player: "
+        display_string = '#'
         if GoBoard.get_color_value(color) == GoBoard.ColorBlack:
-            display_string = display_string + "Black    "
+            display_string = display_string + ' Black Player: ' + self.name + '    '
         else:
-            display_string = display_string + "White    "
+            display_string = display_string + ' White Player: ' + self.name + '    '
         
         move_string = ' Move:' + str(right_move[0]) + '                   '
         value_string = ' Value:' + str(right_move[1]) + '                    '

@@ -575,13 +575,13 @@ class GoBoard(object):
 
     def get_standard_debug_string(self):
         result = '# GoBoard\n'
-        row_string = '#     A B C D E F G H J K L M N O P Q R S T \n'
+        row_string = '#      A B C D E F G H J K L M N O P Q R S T \n'
         
         result =  result + row_string
         
         for i in range(self.board_size - 1, -1, -1):
             line_number = '  ' + str(i+1) + '   '
-            line = '#' + line_number[-5:]
+            line = '# ' + line_number[-5:]
             for j in range(0, self.board_size):
                 if self.board[i][j] == self.ColorBlack:
                     line = line + '\033[1;31mx\033[0m'
@@ -602,13 +602,13 @@ class GoBoard(object):
 
     def get_score_only_debug_string(self):
         result = '# GoBoard\n'
-        row_string = '#     A B C D E F G H J K L M N O P Q R S T \n'
+        row_string = '#       A B C D E F G H J K L M N O P Q R S T \n'
         
         result =  result + row_string
         
         for i in range(self.board_size - 1, -1, -1):
             line_number = '  ' + str(i+1) + '   '
-            line = '#' + line_number[-5:]
+            line = '# ' + line_number[-5:]
             for j in range(0, self.board_size):
                 if self.score_board[i][j] == self.ColorBlack:
                     line = line + '\033[1;31mx\033[0m'

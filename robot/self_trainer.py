@@ -47,8 +47,8 @@ class SelfTrainer(object):
         self.student_win_as_white = 0
         self.different_score_times = 0
         self.game_played = 0
-        self.student_win_percentage = 0
-        self.teacher_win_percentage = 0
+        self.student_win_rate = 0
+        self.teacher_win_rate = 0
 
         
 
@@ -187,11 +187,11 @@ class SelfTrainer(object):
 
                 
     def upgrade_if_necessary(self):
-        self.student_win_percentage = float(self.student_win_as_black + self.student_win_as_white)/self.game_played
-        self.teacher_win_percentage = float(self.teacher_win_as_black + self.teacher_win_as_white)/self.game_played
+        self.student_win_rate = float(self.student_win_as_black + self.student_win_as_white)/self.game_played
+        self.teacher_win_rate = float(self.teacher_win_as_black + self.teacher_win_as_white)/self.game_played
 
         if self.game_played > self.MinPlayTime:
-            if self.student_win_percentage > self.SwitchThreadhold:
+            if self.student_win_rate > self.SwitchThreadhold:
                 # student win enough times, 
                 # going to switch the model of studeng to teacher
 
@@ -203,7 +203,7 @@ class SelfTrainer(object):
                 self.teacher.load_model(model_path)
 
                 self.teacher_upgrade_times = self.teacher_upgrade_times + 1
-            elif self.teacher_win_percentage > self.SwitchThreadhold:
+            elif self.teacher_win_rate > self.SwitchThreadhold:
                 # teacher win enough times, 
                 # going to switch the model of teacher to student
 
@@ -225,8 +225,8 @@ class SelfTrainer(object):
         win_string = '# Black Win:' + str(self.black_win_times) + '      White Win:' + str(self.white_win_times) 
         win_string = win_string + '      Student Win:' + str(self.student_win_as_black + self.student_win_as_white)
         win_string = win_string + '      Teacher Win:' + str(self.teacher_win_as_black + self.teacher_win_as_white)
-        win_string = win_string + '      StudentWinPercentage:' + str(self.student_win_percentage)
-        win_string = win_string + '      TeacherWinPercentage:' + str(self.teacher_win_percentage)
+        win_string = win_string + '      StudentWinRate:' + str(round(self.student_win_rate*10, 1)) + '%'
+        win_string = win_string + '      TeacherWinRate:' + str(round(self.teacher_win_rate*10, 1)) + '%'
         win_string = win_string + '      GamePlayed:' + str(self.game_played)
         
         print (win_string)
