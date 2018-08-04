@@ -233,7 +233,7 @@ class SimpleRobot(object):
             first_value = move_and_score[0][1]
             number_of_best = 0
             for inner_iter in move_and_score:
-                if first_value != inner_iter[1]:
+                if abs(abs(first_value) - abs(inner_iter[1])) > 1:
                     break
                 number_of_best += 1
 
