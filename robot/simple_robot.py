@@ -166,79 +166,86 @@ class SimpleRobot(object):
 
             move_and_predict = zip(input_pos, predict_result)
 
-            
-            move_and_predict.sort(key=lambda x:x[1], reverse=True)
-
             color_value = self.go_board.get_color_value(color)
 
             if color_value == self.go_board.ColorBlack:
-                # print ('# black top move:' + str(move_and_predict[0][0]) + ' with prediction:' + str(move_and_predict[0][1]) + '         ')
-                right_move = move_and_predict[0]
-
-                # if the robot is repeating in three ko, select the second one
-                if self.is_repeating() and len(move_and_predict) > 1:
-                    right_move = move_and_predict[1]
-
+                move_and_predict.sort(key=lambda x:x[1], reverse=True)
                 if move_and_predict[0][1] > self.komi:
                     best_move_is_lossing = False
                 else:
                     best_move_is_lossing = True
                     
-            elif color_value == self.go_board.ColorWhite:
-                # print ('# white top move:' + str(move_and_predict[-1][0]) + ' with prediction:' + str(move_and_predict[-1][1]) + '         ')
-                right_move = move_and_predict[-1]
-
-                # if the robot is repeating in three ko, select the second one
-                if self.is_repeating() and len(move_and_predict) > 1:
-                    right_move = move_and_predict[-2]
-
-                if move_and_predict[-1][1] < self.komi:
+            else:
+                move_and_predict.sort(key=lambda x:x[1])
+                if move_and_predict[0][1] < self.komi:
                     best_move_is_lossing = False
                 else:
                     best_move_is_lossing = True
+                    
+
+            
+
+            right_move = move_and_predict[0]
+
+            # if the robot is repeating in three ko, select the second one
+            if self.is_repeating() and len(move_and_predict) > 1:
+                right_move = move_and_predict[1]
+
+            
+            
 
             # print ('# right move:' + str(right_move[0]) + ' with valueprediction:' + str(right_move[1]) + '       ')
 
         lossing_right_move = (None, 0)
 
         if best_move_is_lossing:
-            # if best move of current color is lossing, 
-            # try to get the best move of enemy and occupy it to block the best move of enemy
 
-            # enemy_color = GoBoard.other_color(color)
+            if len(move_and_predict) == 1:
+                lossing_right_move = move_and_predict[0]
+            else:
+                # if best move is lossing, chossing random one from the first two moves.
+                random_index = random.randint(0,1)
+                lossing_right_move = move_and_predict[random_index]
 
-            all_moves = move_and_result.keys()
 
-            move_and_score = []
+        # if best_move_is_lossing:
+        #     # if best move of current color is lossing, 
+        #     # try to get the best move of enemy and occupy it to block the best move of enemy
 
-            for single_move in all_moves:
-                (score_row, score_col) = single_move
+        #     # enemy_color = GoBoard.other_color(color)
 
-                board_index = score_row*self.board_size + score_col
-                self.simulate_board_list[board_index].update_score_board()
-                current_score = self.simulate_board_list[board_index].score_board_sum
-                move_and_score.append((single_move, current_score))
+        #     all_moves = move_and_result.keys()
+
+        #     move_and_score = []
+
+        #     for single_move in all_moves:
+        #         (score_row, score_col) = single_move
+
+        #         board_index = score_row*self.board_size + score_col
+        #         self.simulate_board_list[board_index].update_score_board()
+        #         current_score = self.simulate_board_list[board_index].score_board_sum
+        #         move_and_score.append((single_move, current_score))
 
                 
 
-            if color_value == self.go_board.ColorBlack:
-                move_and_score.sort(key=lambda x:x[1], reverse=True)
+        #     if color_value == self.go_board.ColorBlack:
+        #         move_and_score.sort(key=lambda x:x[1], reverse=True)
                 
 
                     
-            elif color_value == self.go_board.ColorWhite: 
-                    move_and_score.sort(key=lambda x:x[1])
+        #     elif color_value == self.go_board.ColorWhite: 
+        #             move_and_score.sort(key=lambda x:x[1])
 
             
-            first_value = move_and_score[0][1]
-            number_of_best = 0
-            for inner_iter in move_and_score:
-                if abs(abs(first_value) - abs(inner_iter[1])) > 1:
-                    break
-                number_of_best += 1
+        #     first_value = move_and_score[0][1]
+        #     number_of_best = 0
+        #     for inner_iter in move_and_score:
+        #         if abs(abs(first_value) - abs(inner_iter[1])) > 1:
+        #             break
+        #         number_of_best += 1
 
-            random_index = random.randint(0, number_of_best-1)
-            lossing_right_move = move_and_score[random_index]
+        #     random_index = random.randint(0, number_of_best-1)
+        #     lossing_right_move = move_and_score[random_index]
 
         
         self.display_result(color, right_move, best_move_is_lossing, lossing_right_move)
@@ -413,13 +420,21 @@ class SimpleRobot(object):
 
         if best_move_is_lossing:
             lossing_string = '--Lossing-------------      '
+
+            # \033[1;32mo\033[0m
             lossing_move_string = ' Move:' + str(lossing_right_move[0]) + '                   '
-            lossing_value_string = ' Value:' + str(lossing_right_move[1]) + '                    '
+
+            if lossing_right_move[0] == right_move[0]:
+                lossing_value_string = ' Value:\033[1;32m' + str(lossing_right_move[1]) + '\033[0m                    '
+            else:
+                lossing_value_string = ' Value:' + str(lossing_right_move[1]) + '                    '
+           
+            
         else:
             lossing_string = '-----Not-----Lossing--      '
 
         display_string = display_string + move_string[0:20] + value_string[0:25] 
-        display_string = display_string + lossing_string  + lossing_move_string[0:20] + lossing_value_string[0:25] 
+        display_string = display_string + lossing_string  + lossing_move_string[0:30] + lossing_value_string[0:30] 
         # display_string = display_string + visit_count_string[0:20]
         # display_string = display_string + value_string[0:25] + node_value_string[0:25] + policy_value_string[0:25]
 
