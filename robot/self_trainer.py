@@ -159,7 +159,7 @@ class SelfTrainer(object):
             self.student.reset()
             self.teacher.reset()
 
-            self.upgrade_if_necessary()
+            # self.upgrade_if_necessary()
 
                     
             self.current_black_player = 'teacher'
@@ -183,7 +183,7 @@ class SelfTrainer(object):
             self.student.reset()
             self.teacher.reset()
 
-            self.upgrade_if_necessary()
+            # self.upgrade_if_necessary()
 
                 
     def upgrade_if_necessary(self):
@@ -193,7 +193,7 @@ class SelfTrainer(object):
         if self.game_played > self.MinPlayTime:
             if self.student_win_percentage > self.SwitchThreadhold:
                 # student win enough times, 
-                # going to switch the model of student to teacher
+                # going to switch the model of studeng to teacher
 
                 self.reset_statistic()
 
@@ -204,8 +204,8 @@ class SelfTrainer(object):
 
                 self.teacher_upgrade_times = self.teacher_upgrade_times + 1
             elif self.teacher_win_percentage > self.SwitchThreadhold:
-                # student win enough times, 
-                # going to switch the model of student to teacher
+                # teacher win enough times, 
+                # going to switch the model of teacher to student
 
                 self.reset_statistic()
 

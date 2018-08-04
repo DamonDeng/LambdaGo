@@ -60,7 +60,9 @@ class TensorModel(object):
             print ('----')
             print (conv1.name)
 
-            short_cut = conv1 + reshaped_input_x
+            # short_cut = conv1 + reshaped_input_x
+
+            short_cut = tf.concat([conv1, reshaped_input_x], 3)
 
             # shape: [None,19,19,257]
 
@@ -74,7 +76,8 @@ class TensorModel(object):
                     activation=tf.nn.tanh,
                     name = name_scope + 'conv_in_'+str(i))
 
-                short_cut = conv_in + short_cut
+                # short_cut = conv_in + short_cut
+                short_cut = tf.concat([conv_in, short_cut], 3)
             
             # shape: [None,19,19,257]
 
