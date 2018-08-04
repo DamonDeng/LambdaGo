@@ -161,6 +161,9 @@ class SelfTrainer(object):
             self.student.reset()
             self.teacher.reset()
 
+            self.student_win_rate = float(self.student_win_as_black + self.student_win_as_white)/self.game_played
+            self.teacher_win_rate = float(self.teacher_win_as_black + self.teacher_win_as_white)/self.game_played
+
             # self.upgrade_if_necessary()
             self.save_check_point()
 
@@ -186,6 +189,9 @@ class SelfTrainer(object):
             self.student.reset()
             self.teacher.reset()
 
+            self.student_win_rate = float(self.student_win_as_black + self.student_win_as_white)/self.game_played
+            self.teacher_win_rate = float(self.teacher_win_as_black + self.teacher_win_as_white)/self.game_played
+
             # self.upgrade_if_necessary()
 
             self.save_check_point()
@@ -207,8 +213,7 @@ class SelfTrainer(object):
 
                 
     def upgrade_if_necessary(self):
-        self.student_win_rate = float(self.student_win_as_black + self.student_win_as_white)/self.game_played
-        self.teacher_win_rate = float(self.teacher_win_as_black + self.teacher_win_as_white)/self.game_played
+        
 
         if self.game_played > self.MinPlayTime:
             if self.student_win_rate > self.SwitchThreadhold:
