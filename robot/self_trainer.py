@@ -28,6 +28,8 @@ class SelfTrainer(object):
         self.student_upgrade_times = 0
         self.teacher_upgrade_times = 0
 
+        self.check_point_number = 0
+
         self.reset_statistic()
 
         # use current time as prefix of saved model
@@ -160,6 +162,7 @@ class SelfTrainer(object):
             self.teacher.reset()
 
             # self.upgrade_if_necessary()
+            self.save_check_point()
 
                     
             self.current_black_player = 'teacher'
@@ -184,6 +187,23 @@ class SelfTrainer(object):
             self.teacher.reset()
 
             # self.upgrade_if_necessary()
+
+            self.save_check_point()
+
+    def save_check_point(self):
+
+        if self.game_played%100 == 0:
+            
+            self.check_point_number += 1
+
+            t_model_path = self.model_dir + self.prefix + '__t__' + str(self.check_point_number)
+            s_model_path = self.model_dir + self.prefix + '__s__' + str(self.check_point_number)
+            
+            self.student.save_model(s_model_path)
+            self.teacher.save_model(t_model_path)
+
+
+
 
                 
     def upgrade_if_necessary(self):
