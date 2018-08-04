@@ -410,13 +410,15 @@ class GoBoard(object):
 
         self.score_marker = np.zeros((self.board_size, self.board_size), dtype=int)
 
+        self.score_board = self.board.copy()
+        self.score_marker = abs(self.board)
+
         for i in range(0, self.board_size):
             for j in range(0, self.board_size):
-                if self.board[i][j] == self.ColorBlack or self.board[i][j] == self.ColorWhite:
-                    self.score_marker[i][j] = 1
-                    self.score_board[i][j] = self.board[i][j]
-                    
-                elif self.board[i][j] == self.ColorEmpty:
+                # if self.board[i][j] == self.ColorBlack or self.board[i][j] == self.ColorWhite:
+                #     self.score_marker[i][j] = 1
+                #     self.score_board[i][j] = self.board[i][j]
+                if self.board[i][j] == self.ColorEmpty:
                     if self.score_marker[i][j] != 1:
                         self.score_empty_point(i, j)
 
@@ -440,62 +442,75 @@ class GoBoard(object):
         self.review_has_white = 0
         self.review_has_black = 0
 
-        self.empty_score_review(row, col)
+        review_result = []
 
-        for i in range(self.board_size):
-            for j in range(self.board_size):
-                if self.review_record[i][j] == 1:
-                    self.score_marker[i][j] = 1
-                    if self.review_has_black == 1 and self.review_has_white == 1:
-                        self.score_board[i][j] = self.ColorEmpty
-                    elif self.review_has_black == 1:
-                        self.score_board[i][j] = self.ColorBlack
-                    elif self.review_has_white == 1:
-                        self.score_board[i][j] = self.ColorWhite
+        review_result = self.empty_score_review(row, col, review_result)
+
+        for single_review_pos in review_result:
+            (i, j) = single_review_pos
+            self.score_marker[i][j] = 1
+            if self.review_has_black == 1 and self.review_has_white == 1:
+                self.score_board[i][j] = self.ColorEmpty
+            elif self.review_has_black == 1:
+                self.score_board[i][j] = self.ColorBlack
+            elif self.review_has_white == 1:
+                self.score_board[i][j] = self.ColorWhite
+
+        # for i in range(self.board_size):
+        #     for j in range(self.board_size):
+        #         if self.review_record[i][j] == 1:
+        #             self.score_marker[i][j] = 1
+        #             if self.review_has_black == 1 and self.review_has_white == 1:
+        #                 self.score_board[i][j] = self.ColorEmpty
+        #             elif self.review_has_black == 1:
+        #                 self.score_board[i][j] = self.ColorBlack
+        #             elif self.review_has_white == 1:
+        #                 self.score_board[i][j] = self.ColorWhite
 
 
 
-    def empty_score_review(self, row, col):
+    def empty_score_review(self, row, col, review_result):
 
         # print('# reviewing: ' + str(row) + ',' + str(col))
         if row < 0 or row >= self.board_size or col < 0 or col >= self.board_size:
             # current location is out of board, return
-            return
+            return review_result
 
         if self.review_record[row][col] == 1:
             # this point has been reviewed, return
-            return
+            return review_result
 
         if self.board[row][col] == self.ColorEmpty:
             # color of current stone is empty point, need to check the location around.
 
             # set current location as reviewd
             self.review_record[row][col] = 1
+            review_result.append((row, col))
 
             # start to check the location around
-            self.empty_score_review(row+1, col)
+            review_result = self.empty_score_review(row+1, col, review_result)
 
-            self.empty_score_review(row, col+1)
+            review_result = self.empty_score_review(row, col+1, review_result)
             
-            self.empty_score_review(row-1, col)
+            review_result = self.empty_score_review(row-1, col, review_result)
             
-            self.empty_score_review(row, col-1)
+            review_result = self.empty_score_review(row, col-1, review_result)
 
             # beside the point in review history, all the neighbours are dead, return True
             # print('# stone around are dead')
-            return
+            return review_result
 
         elif self.board[row][col] == self.ColorBlack:
 
             self.review_has_black = 1
             # current location is black, this empty space has black around.
-            return
+            return review_result
 
         elif self.board[row][col] == self.ColorWhite:
 
             self.review_has_white = 1
             # current location is black, this empty space has white around.
-            return
+            return review_result
 
 
     def get_color(self, pos):

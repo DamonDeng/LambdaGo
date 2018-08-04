@@ -83,7 +83,10 @@ class SimpleRobot(object):
             return False
 
     def showboard(self):
+        # start_time = time.time()
         self.go_board.update_score_board()
+        # end_time = time.time()
+        # print ('# time used:' + str(end_time - start_time))
         return str(self.go_board)
 
 
@@ -117,6 +120,138 @@ class SimpleRobot(object):
 
 
     def simulate_best_move(self, color, pos_filter=None):
+
+        move_and_result , forbidden_moves = self.simulate_all_move(color)
+
+        all_moves = move_and_result.keys()
+
+        right_move = (None, 0)
+
+        best_move_is_lossing = False
+
+        if len(all_moves) <= 0:
+            # no available move left, just return PASS, and current score board sum as value
+            if not self.go_board.score_board_updated:
+                self.go_board.update_score_board()
+
+            right_move = (None, self.go_board.score_board_sum)
+
+            # best_move_is_lossing = False
+            lossing_right_move = (None, 0)
+
+            self.display_result(color, right_move, best_move_is_lossing, lossing_right_move)
+
+            return right_move, forbidden_moves
+        else:
+            # selected_move = all_moves[0]
+            input_states = []
+            input_pos = []
+            for pos in all_moves:
+
+                temp_board = move_and_result.get(pos)
+                # temp_board.update_score_board()
+
+                input_states.append(temp_board.board)
+                # input_score.append(temp_board.score_board_sum)
+                input_pos.append(pos)
+
+            # time debug for prediction
+            # start_time = time.time()
+
+            predict_result = self.model.predict(input_states)
+
+            # time debug for prediction
+            # end_time = time.time()
+            # print('# time used for prediction:' + str(end_time - start_time) + '         ')
+
+            move_and_predict = zip(input_pos, predict_result)
+
+            
+            move_and_predict.sort(key=lambda x:x[1], reverse=True)
+
+            color_value = self.go_board.get_color_value(color)
+
+            if color_value == self.go_board.ColorBlack:
+                # print ('# black top move:' + str(move_and_predict[0][0]) + ' with prediction:' + str(move_and_predict[0][1]) + '         ')
+                right_move = move_and_predict[0]
+
+                # if the robot is repeating in three ko, select the second one
+                if self.is_repeating() and len(move_and_predict) > 1:
+                    right_move = move_and_predict[1]
+
+                if move_and_predict[0][1] > self.komi:
+                    best_move_is_lossing = False
+                else:
+                    best_move_is_lossing = True
+                    
+            elif color_value == self.go_board.ColorWhite:
+                # print ('# white top move:' + str(move_and_predict[-1][0]) + ' with prediction:' + str(move_and_predict[-1][1]) + '         ')
+                right_move = move_and_predict[-1]
+
+                # if the robot is repeating in three ko, select the second one
+                if self.is_repeating() and len(move_and_predict) > 1:
+                    right_move = move_and_predict[-2]
+
+                if move_and_predict[-1][1] < self.komi:
+                    best_move_is_lossing = False
+                else:
+                    best_move_is_lossing = True
+
+            # print ('# right move:' + str(right_move[0]) + ' with valueprediction:' + str(right_move[1]) + '       ')
+
+        lossing_right_move = (None, 0)
+
+        if best_move_is_lossing:
+            # if best move of current color is lossing, 
+            # try to get the best move of enemy and occupy it to block the best move of enemy
+
+            # enemy_color = GoBoard.other_color(color)
+
+            all_moves = move_and_result.keys()
+
+            move_and_score = []
+
+            for single_move in all_moves:
+                (score_row, score_col) = single_move
+
+                board_index = score_row*self.board_size + score_col
+                self.simulate_board_list[board_index].update_score_board()
+                current_score = self.simulate_board_list[board_index].score_board_sum
+                move_and_score.append((single_move, current_score))
+
+                
+
+                if color_value == self.go_board.ColorBlack:
+                    move_and_score.sort(key=lambda x:x[1], reverse=True)
+                    
+
+                        
+                elif color_value == self.go_board.ColorWhite: 
+                     move_and_score.sort(key=lambda x:x[1])
+
+                
+                first_value = move_and_score[0][1]
+                number_of_best = 0
+                for inner_iter in move_and_score:
+                    if first_value != inner_iter[1]:
+                        break
+                    number_of_best += 1
+
+                random_index = random.randint(0, number_of_best-1)
+                lossing_right_move = move_and_score[random_index]
+
+                    
+
+        
+        self.display_result(color, right_move, best_move_is_lossing, lossing_right_move)
+        
+        
+        if best_move_is_lossing:
+            return lossing_right_move, forbidden_moves
+        else:
+            return right_move, forbidden_moves
+
+    def simulate_best_move_both_side(self, color, pos_filter=None):
         move_and_result , forbidden_moves = self.simulate_all_move(color)
 
         all_moves = move_and_result.keys()
@@ -261,7 +396,6 @@ class SimpleRobot(object):
             return lossing_right_move, forbidden_moves
         else:
             return right_move, forbidden_moves
-
     
     def display_result(self, color, right_move, best_move_is_lossing, lossing_right_move):
         display_string = '#'
