@@ -221,26 +221,24 @@ class SimpleRobot(object):
 
                 
 
-                if color_value == self.go_board.ColorBlack:
-                    move_and_score.sort(key=lambda x:x[1], reverse=True)
-                    
-
-                        
-                elif color_value == self.go_board.ColorWhite: 
-                     move_and_score.sort(key=lambda x:x[1])
-
+            if color_value == self.go_board.ColorBlack:
+                move_and_score.sort(key=lambda x:x[1], reverse=True)
                 
-                first_value = move_and_score[0][1]
-                number_of_best = 0
-                for inner_iter in move_and_score:
-                    if first_value != inner_iter[1]:
-                        break
-                    number_of_best += 1
-
-                random_index = random.randint(0, number_of_best-1)
-                lossing_right_move = move_and_score[random_index]
 
                     
+            elif color_value == self.go_board.ColorWhite: 
+                    move_and_score.sort(key=lambda x:x[1])
+
+            
+            first_value = move_and_score[0][1]
+            number_of_best = 0
+            for inner_iter in move_and_score:
+                if first_value != inner_iter[1]:
+                    break
+                number_of_best += 1
+
+            random_index = random.randint(0, number_of_best-1)
+            lossing_right_move = move_and_score[random_index]
 
         
         self.display_result(color, right_move, best_move_is_lossing, lossing_right_move)
