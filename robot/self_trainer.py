@@ -198,7 +198,7 @@ class SelfTrainer(object):
 
     def save_check_point(self):
 
-        if self.game_played%100 == 0:
+        if self.game_played%100 == 99:
             
             self.check_point_number += 1
 
