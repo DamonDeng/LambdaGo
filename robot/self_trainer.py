@@ -17,7 +17,7 @@ class SelfTrainer(object):
 
         self.board_size = 19
 
-        self.max_play_move = 1024
+        self.max_play_move = 512
         self.ColorBlackChar = 'b'
         self.ColorWhiteChar = 'w'
 
@@ -106,25 +106,25 @@ class SelfTrainer(object):
                 move_sequence.append((self.ColorWhiteChar, None))
                 break
 
-        if not both_pass:
-            print ('Out of the max play move: ' + str(self.max_play_move))
-            return False, None, None, None, None
-        else:
+        # if not both_pass:
+        #     # print ('# Out of the max play move: ' + str(self.max_play_move))
+        #     return False, None, None, None, None
+        # else:
             # print ('Both play PASS!')
-            black_score = black_robot.get_score()
-            white_score = white_robot.get_score()
-            
-            if black_score != white_score:
-                self.different_score_times = self.different_score_times + 1
-                return False, None, None, None
-            else:
-                # black_score is equal to white_score
-                # that means both player agree with the score
-                # just return black_score as result
+        black_score = black_robot.get_score()
+        white_score = white_robot.get_score()
+        
+        if black_score != white_score:
+            self.different_score_times = self.different_score_times + 1
+            return False, None, None, None
+        else:
+            # black_score is equal to white_score
+            # that means both player agree with the score
+            # just return black_score as result
 
-                score_board = black_robot.get_score_board()
+            score_board = black_robot.get_score_board()
 
-                return True, black_score, board_states, move_sequence, score_board
+            return True, black_score, board_states, move_sequence, score_board
 
 
     def self_train(self, iter_number = 10):
@@ -250,8 +250,8 @@ class SelfTrainer(object):
         win_string = '# Black Win:' + str(self.black_win_times) + '      White Win:' + str(self.white_win_times) 
         win_string = win_string + '      Student Win:' + str(self.student_win_as_black + self.student_win_as_white)
         win_string = win_string + '      Teacher Win:' + str(self.teacher_win_as_black + self.teacher_win_as_white)
-        win_string = win_string + '      StudentWinRate:' + str(round(self.student_win_rate*10, 1)) + '%'
-        win_string = win_string + '      TeacherWinRate:' + str(round(self.teacher_win_rate*10, 1)) + '%'
+        win_string = win_string + '      StudentWinRate:' + str(round(self.student_win_rate*100, 1)) + '%'
+        win_string = win_string + '      TeacherWinRate:' + str(round(self.teacher_win_rate*100, 1)) + '%'
         win_string = win_string + '      GamePlayed:' + str(self.game_played)
         
         print (win_string)
