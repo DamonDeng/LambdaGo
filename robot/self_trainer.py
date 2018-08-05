@@ -142,15 +142,19 @@ class SelfTrainer(object):
 
             both_pass, score, board_states, move_sequence, score_board = self.self_play(self.student, self.teacher)
 
+            winer_string = ''
+
             if both_pass:
                 if score > self.komi:
                     self.black_win_times = self.black_win_times + 1
                     self.student_win_as_black = self.student_win_as_black + 1
+                    winner_string = 'Black'
                 elif score <= self.komi:
                     self.white_win_times = self.white_win_times + 1
                     self.teacher_win_as_white = self.teacher_win_as_white + 1
+                    winner_string = 'White'
 
-                print ('# Both pass, trying to train student as black.')
+                print ('# Both pass, '+winner_string+' win, trying to train.')
                 self.student.train(board_states, move_sequence, score_board)
                 self.teacher.train(board_states, move_sequence, score_board)
                 
@@ -171,15 +175,19 @@ class SelfTrainer(object):
             self.current_black_player = 'teacher'
             both_pass, score, board_states, move_sequence, score_board = self.self_play(self.teacher, self.student)
 
+            winer_string = ''
+
             if both_pass:
                 if score > self.komi:
                     self.black_win_times = self.black_win_times + 1
                     self.teacher_win_as_black = self.teacher_win_as_black + 1
+                    winner_string = 'Black'
                 elif score <= self.komi:
                     self.white_win_times = self.white_win_times + 1
                     self.student_win_as_white = self.student_win_as_white + 1
+                    winner_string = 'White'
 
-                print ('# Both pass, trying to train student as white.')
+                print ('# Both pass, '+winner_string+' win, trying to train.')
                 self.student.train(board_states, move_sequence, score_board)
                 self.teacher.train(board_states, move_sequence, score_board)
             else:

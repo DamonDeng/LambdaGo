@@ -680,9 +680,9 @@ class GoBoard(object):
             black_score_string = '          ' + str(self.score_board_sum_black) + '       '
             white_score_string = '          ' + str(self.score_board_sum_white) + '       '
 
-            score_string = score_string + ' Score: ' + total_score_string[-10:]
-            score_string = score_string + ',  Black: ' + black_score_string[-10:]
-            score_string = score_string + ', White: ' + white_score_string[-10:]
+            score_string = score_string + ' Score: ' + total_score_string[-11:]
+            score_string = score_string + ',  Black: ' + black_score_string[-11:]
+            score_string = score_string + ', White: ' + white_score_string[-11:]
             score_string = score_string + '\n'
             
         else:

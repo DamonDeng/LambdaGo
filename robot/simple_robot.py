@@ -461,7 +461,7 @@ class SimpleRobot(object):
         
     def train(self, board_states, move_sequence, score_board):
 
-        print (' Startined to train the model')
+        print (' Starting to train the model')
 
         training_length = len(board_states)
 
@@ -470,18 +470,39 @@ class SimpleRobot(object):
         for i in range(training_length):
             training_y.append(score_board)
 
-        self.model.train(board_states, training_y, steps=10)
+        # set the batch_size to half of the max stone number
+        # to make sure that the model can be train only if the robot can be used to play.
 
-        reverse_training_states = []
-        reverse_training_y = []
+        batch_size = self.board_size*self.board_size/2
+        total_train_sample = len(board_states)
 
-        reverse_score_board = -score_board
+        batch_number = 0
 
-        for i in range(training_length):
-            reverse_training_states.append( -board_states[i])
-            reverse_training_y.append(reverse_score_board)
+        while (batch_number+1)*batch_size < total_train_sample:
 
-        self.model.train(reverse_training_states, reverse_training_y, steps=10)
+            s_index = batch_number*batch_size
+            e_index = (batch_number+1)*batch_size
+
+            self.model.train(board_states[s_index:e_index], training_y[s_index:e_index], steps=10)
+
+            batch_number += 1
+
+        s_index = batch_number*batch_size
+        self.model.train(board_states[s_index:], training_y[s_index:], steps=10)
+
+
+        # reverse_training_states = []
+        # reverse_training_y = []
+
+        # reverse_score_board = -score_board
+
+        # for i in range(training_length):
+        #     reverse_training_states.append( -board_states[i])
+        #     reverse_training_y.append(reverse_score_board)
+
+        
+
+        # self.model.train(reverse_training_states, reverse_training_y, steps=10)
 
 
 
