@@ -204,7 +204,10 @@ class SimpleRobot(object):
                 lossing_right_move = move_and_predict[0]
             else:
                 # if best move is lossing, chossing random one from the first two moves.
-                random_index = random.randint(0,9)
+
+                move_to_select = min(len(move_and_predict), 10)
+
+                random_index = random.randint(0,move_to_select-1)
                 lossing_right_move = move_and_predict[random_index]
 
 
