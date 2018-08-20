@@ -7,7 +7,7 @@ import random
 
 class SimpleRobot(object):
 
-    def __init__(self, name='DefaultSimpleRobot', layer_number=19, old_model=None, boardsize=19, komi=7.5):
+    def __init__(self, name='DefaultSimpleRobot', layer_number=19, old_model=None, train_iter=10, boardsize=19, komi=7.5):
         self.name = name
         self.layer_number = layer_number
 
@@ -19,7 +19,7 @@ class SimpleRobot(object):
         self.ColorBlackChar = 'b'
         self.ColorWhiteChar = 'w'
 
-        
+        self.train_iter = train_iter
 
         # self.for_repeat_move = [(-1, -1), (-2, -2), (-3, -3), (-4, -4), (-5, -5), (-6, -6)]
 
@@ -493,7 +493,7 @@ class SimpleRobot(object):
             batch_number += 1
 
         s_index = batch_number*batch_size
-        self.model.train(board_states[s_index:], training_y[s_index:], steps=10)
+        self.model.train(board_states[s_index:], training_y[s_index:], steps=self.train_iter)
 
 
         # reverse_training_states = []

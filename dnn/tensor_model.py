@@ -53,7 +53,8 @@ class TensorModel(object):
                 filters=256,
                 kernel_size=[3, 3],
                 padding="same",
-                activation=tf.nn.tanh,
+                activation=tf.nn.relu,
+                # activation=tf.nn.tanh,
                 name = name_scope + 'conv1')
             # shape: [None,19,19,256]
 
@@ -73,7 +74,8 @@ class TensorModel(object):
                     filters=256,
                     kernel_size=[3, 3],
                     padding="same",
-                    activation=tf.nn.tanh,
+                    activation=tf.nn.relu,
+                    # activation=tf.nn.tanh,
                     name = name_scope + 'conv_in_'+str(i))
 
                 # short_cut = conv_in + short_cut
@@ -86,7 +88,8 @@ class TensorModel(object):
                 filters=1,
                 kernel_size=[3, 3],
                 padding="same",
-                activation=tf.nn.tanh,
+                activation=tf.nn.relu,
+                # activation=tf.nn.tanh,
                 name = name_scope + 'last_conv')
             # shape: [None,19,19,1]
 
