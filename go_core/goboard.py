@@ -645,7 +645,11 @@ class GoBoard(object):
     def get_score_debug_string(self):
 
         result = '# GoBoard\n'
-        row_string = '#       A B C D E F G H J K L M N O P Q R S T \n'
+        row_string = '#      '
+        char_string = 'A B C D E F G H J K L M N O P Q R S T '
+        row_char_string = char_string[0:self.board_size*2]
+
+        row_string = row_string + row_char_string + '\n'
         
         result =  result + row_string
         
