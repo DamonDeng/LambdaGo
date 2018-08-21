@@ -1,22 +1,26 @@
 from go_core.goboard import GoBoard
 from dnn.dual_head_model import DualHeadModel
-from mcts.mcts_node import MTCSNode
+from mcts.mcts_node import MCTSNode
 import numpy as np
 
 import time
 import random
 
 
-class MTCSRobot(object):
 
-    def __init__(self, name='DefaultMTCSRobot', layer_number=19, old_model=None, search_time=100):
+class MCTSRobot(object):
+
+    def __init__(self, name='DefaultMCTSRobot', layer_number=19, old_model=None, search_time=100, board_size=19, komi=7.5, train_iter=2):
         self.name = name
         self.layer_number = layer_number
         self.search_time = search_time
 
 
+        self.train_iter = train_iter
 
-        self.board_size = 19
+        self.board_size = board_size
+        self.komi = komi
+
         self.stone_number = self.board_size*self.board_size
 
         self.simulate_board_list = []
@@ -27,7 +31,7 @@ class MTCSRobot(object):
         self.BlackIdentify = np.ones((self.board_size, self.board_size), dtype=int)
         self.WhiteIdentify = np.ones((self.board_size, self.board_size), dtype=int) * -1
 
-        self.komi = 7.5
+        
 
         self.PosArray = []
 
@@ -46,7 +50,7 @@ class MTCSRobot(object):
             self.model = DualHeadModel(self.name, self.board_size, model_path='./model/' + old_model, layer_number=self.layer_number)
 
     def reset(self):
-        self.root_node = MTCSNode()
+        self.root_node = MCTSNode()
         self.root_node.is_root = True
         self.root_node.is_leaf = True
 
@@ -114,7 +118,7 @@ class MTCSRobot(object):
 
     def simulate_best_move(self, color, pos_filter=None):
         # create a new node as root node, we may need to reuse node from original tree in the future:
-        self.root_node = MTCSNode()
+        self.root_node = MCTSNode()
 
         self.root_node.set_simulate_board(self.go_board)
         current_color = GoBoard.get_color_value(color)
@@ -123,7 +127,7 @@ class MTCSRobot(object):
         self.root_node.player_color = current_color
         self.root_node.is_root = True
 
-        self.expand_mtcs_node(self.root_node, None)
+        self.expand_mcts_node(self.root_node, None)
 
         right_move = self.mcts_search(self.root_node, color)
 
@@ -142,7 +146,7 @@ class MTCSRobot(object):
             # print ('Search to Expand time:' + str(end_time - start_time))
 
             # print ('searching......, iter:' + str(i))
-            # value = self.expand_mtcs_node(node_visited)
+            # value = self.expand_mcts_node(node_visited)
             # self.node_back_up(node_visited, value)
 
         right_node = self.lookup_right_node(self.root_node)
@@ -225,7 +229,7 @@ class MTCSRobot(object):
 
                 # start_time = time.time()
 
-                value = self.expand_mtcs_node(best_node, current_node)
+                value = self.expand_mcts_node(best_node, current_node)
 
                 # end_time = time.time()
 
@@ -244,7 +248,7 @@ class MTCSRobot(object):
             return value
         
         # else:
-        #     value = self.expand_mtcs_node(current_node)
+        #     value = self.expand_mcts_node(current_node)
         #     return value
 
 
@@ -252,7 +256,7 @@ class MTCSRobot(object):
 
         
 
-    def expand_mtcs_node(self, current_node, parent_node):
+    def expand_mcts_node(self, current_node, parent_node):
 
         # if parent_node is None:
         #     # no parent node, it is root node, we can use the value in current node, which is root node that was initialized.
@@ -303,7 +307,7 @@ class MTCSRobot(object):
         
         move_and_policy_value = zip(self.PosArray, policy_array)
 
-        # # need to consider whether sorting this array helps to improve the mtcs searching speed.
+        # # need to consider whether sorting this array helps to improve the MCTS searching speed.
         # move_and_policy_value.sort(key=lambda x:x[1], reverse=True)
 
         # simulate_start_time = time.time()
@@ -313,7 +317,7 @@ class MTCSRobot(object):
             move = single_move_and_policy[0]
             policy_value = single_move_and_policy[1]
 
-            new_child = MTCSNode()
+            new_child = MCTSNode()
 
             new_child.simulate_board = GoBoard(self.board_size)
             new_child.simulate_board.copy_from(current_node.simulate_board)
@@ -399,7 +403,7 @@ class MTCSRobot(object):
 
         print ('# robot ' + self.name + ' is in training.........')
 
-        self.model.train(self.training_data, self.training_score, self.training_move, steps=2)
+        self.model.train(self.training_data, self.training_score, self.training_move, steps=self.train_iter)
 
     def new_game(self):
         self.reset_board()

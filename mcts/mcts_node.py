@@ -2,7 +2,7 @@
 from go_core.goboard import GoBoard
 
 
-class MTCSNode(object):
+class MCTSNode(object):
 
     def __init__(self):
 

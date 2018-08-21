@@ -7,11 +7,11 @@ import random
 
 class SimpleRobot(object):
 
-    def __init__(self, name='DefaultSimpleRobot', layer_number=19, old_model=None, train_iter=10, boardsize=19, komi=7.5):
+    def __init__(self, name='DefaultSimpleRobot', layer_number=19, old_model=None, train_iter=10, board_size=19, komi=7.5):
         self.name = name
         self.layer_number = layer_number
 
-        self.board_size = boardsize
+        self.board_size = board_size
         self.komi = komi
 
         self.simulate_board_list = []
@@ -125,92 +125,98 @@ class SimpleRobot(object):
 
         move_and_result , forbidden_moves = self.simulate_all_move(color)
 
+        move_and_result[None] = self.go_board
+
         all_moves = move_and_result.keys()
 
         right_move = (None, 0)
 
         best_move_is_lossing = False
 
-        if len(all_moves) <= 0:
-            # no available move left, just return PASS, and current score board sum as value
-            if not self.go_board.score_board_updated:
-                self.go_board.update_score_board()
+        # if len(all_moves) <= 0:
+        #     # no available move left, just return PASS, and current score board sum as value
+        #     if not self.go_board.score_board_updated:
+        #         self.go_board.update_score_board()
 
-            right_move = (None, self.go_board.score_board_sum)
+        #     right_move = (None, self.go_board.score_board_sum)
 
-            # best_move_is_lossing = False
-            lossing_right_move = (None, 0)
+        #     # best_move_is_lossing = False
+        #     lossing_right_move = (None, 0)
 
-            self.display_result(color, right_move, best_move_is_lossing, lossing_right_move)
+        #     self.display_result(color, right_move, best_move_is_lossing, lossing_right_move)
 
-            return right_move, forbidden_moves
-        else:
+        #     return right_move, forbidden_moves
+        # else:
             # selected_move = all_moves[0]
-            input_states = []
-            input_pos = []
-            for pos in all_moves:
+        input_states = []
+        input_pos = []
+        for pos in all_moves:
 
-                temp_board = move_and_result.get(pos)
-                # temp_board.update_score_board()
+            temp_board = move_and_result.get(pos)
+            # temp_board.update_score_board()
 
-                input_states.append(temp_board.board)
-                # input_score.append(temp_board.score_board_sum)
-                input_pos.append(pos)
+            input_states.append(temp_board.board)
+            # input_score.append(temp_board.score_board_sum)
+            input_pos.append(pos)
 
-            # time debug for prediction
-            # start_time = time.time()
+        # time debug for prediction
+        # start_time = time.time()
 
-            predict_result = self.model.predict(input_states)
+        predict_result = self.model.predict(input_states)
 
-            # time debug for prediction
-            # end_time = time.time()
-            # print('# time used for prediction:' + str(end_time - start_time) + '         ')
+        # time debug for prediction
+        # end_time = time.time()
+        # print('# time used for prediction:' + str(end_time - start_time) + '         ')
 
-            move_and_predict = zip(input_pos, predict_result)
+        move_and_predict = zip(input_pos, predict_result)
 
-            color_value = self.go_board.get_color_value(color)
+        color_value = self.go_board.get_color_value(color)
 
-            if color_value == self.go_board.ColorBlack:
-                move_and_predict.sort(key=lambda x:x[1], reverse=True)
-                if move_and_predict[0][1] > self.komi:
-                    best_move_is_lossing = False
-                else:
-                    best_move_is_lossing = True
-                    
+        if color_value == self.go_board.ColorBlack:
+            move_and_predict.sort(key=lambda x:x[1], reverse=True)
+            if move_and_predict[0][1] > self.komi:
+                best_move_is_lossing = False
             else:
-                move_and_predict.sort(key=lambda x:x[1])
-                if move_and_predict[0][1] < self.komi:
-                    best_move_is_lossing = False
-                else:
-                    best_move_is_lossing = True
-                    
+                best_move_is_lossing = True
+                
+        else:
+            move_and_predict.sort(key=lambda x:x[1])
+            if move_and_predict[0][1] < self.komi:
+                best_move_is_lossing = False
+            else:
+                best_move_is_lossing = True
+                
 
-            
+        
 
-            right_move = move_and_predict[0]
+        right_move = move_and_predict[0]
 
-            # if the robot is repeating in three ko, select the second one
-            if self.is_repeating() and len(move_and_predict) > 1:
-                right_move = move_and_predict[1]
+        # if the robot is repeating in three ko, select the second one
+        if self.is_repeating() and len(move_and_predict) > 1:
+            right_move = move_and_predict[1]
 
             
             
 
             # print ('# right move:' + str(right_move[0]) + ' with valueprediction:' + str(right_move[1]) + '       ')
 
-        lossing_right_move = (None, 0)
+        # use the right move even if it is lossing
+        lossing_right_move = right_move
 
-        if best_move_is_lossing:
+        # # random move choossing for lossing move:
+        # lossing_right_move = (None, 0)
 
-            if len(move_and_predict) == 1:
-                lossing_right_move = move_and_predict[0]
-            else:
-                # if best move is lossing, chossing random one from the first two moves.
+        # if best_move_is_lossing:
 
-                move_to_select = min(len(move_and_predict), 10)
+        #     if len(move_and_predict) == 1:
+        #         lossing_right_move = move_and_predict[0]
+        #     else:
+        #         # if best move is lossing, chossing random one from the first two moves.
 
-                random_index = random.randint(0,move_to_select-1)
-                lossing_right_move = move_and_predict[random_index]
+        #         move_to_select = min(len(move_and_predict), 10)
+
+        #         random_index = random.randint(0,move_to_select-1)
+        #         lossing_right_move = move_and_predict[random_index]
 
 
         # if best_move_is_lossing:
