@@ -494,7 +494,7 @@ class SimpleRobot(object):
             s_index = batch_number*batch_size
             e_index = (batch_number+1)*batch_size
 
-            self.model.train(board_states[s_index:e_index], training_y[s_index:e_index], steps=10)
+            self.model.train(board_states[s_index:e_index], training_y[s_index:e_index], steps=self.train_iter)
 
             batch_number += 1
 
