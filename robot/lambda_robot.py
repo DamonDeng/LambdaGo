@@ -1,11 +1,11 @@
-from go_core.delta_goboard import DeltaGoBoard
+from go_core.lambda_goboard import LambdaGoBoard
 # from dnn.tensor_model import TensorModel
 
 import time
 import random
 
 
-class SimpleRobot(object):
+class LambdaRobot(object):
 
     def __init__(self, name='DefaultDeltaRobot', layer_number=19, old_model=None):
         self.name = name
@@ -19,7 +19,7 @@ class SimpleRobot(object):
 
         self.komi = 7.5
 
-        self.go_board = DeltaGoBoard(self.board_size)
+        self.go_board = LambdaGoBoard(self.board_size)
 
         
 

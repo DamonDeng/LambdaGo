@@ -11,8 +11,9 @@ from gtp import GTPFrontend
 # from robot.delta_robot import SimpleRobot
 from robot.simple_robot import SimpleRobot
 
+from robot.lambda_robot import LambdaRobot
 
-test_robot = SimpleRobot()
+test_robot = LambdaRobot()
 
 frontend = GTPFrontend(bot=test_robot)
 

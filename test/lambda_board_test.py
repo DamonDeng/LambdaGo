@@ -1,4 +1,4 @@
-from go_core.delta_goboard import DeltaGoBoard
+from go_core.lambda_goboard import LambdaGoBoard
 from robot.simple_robot import SimpleRobot
 
 from gtp import GTPFrontend
@@ -6,7 +6,7 @@ from sys import argv
 
 
 def simple_test():
-    testBoard = DeltaGoBoard()
+    testBoard = LambdaGoBoard()
 
     testBoard.apply_move('b', (1, 1))
     testBoard.apply_move('b', (11, 1))

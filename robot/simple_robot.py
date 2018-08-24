@@ -1,5 +1,5 @@
 from go_core.goboard import GoBoard
-from dnn.tensor_model import TensorModel
+from network.tensor_model import TensorModel
 
 import time
 import random
