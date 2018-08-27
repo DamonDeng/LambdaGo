@@ -32,6 +32,7 @@ class LambdaRobot(object):
         self.repeat_check_move = None
         self.board_snapshot = np.zeros((self.board_size, self.board_size))
         self.repeat_move_number = 0
+        self.all_repeat_move = []
         
 
     def reset_board(self):
@@ -146,51 +147,28 @@ class LambdaRobot(object):
         if (color, right_move[0]) in self.move_record:
             if not self.in_repeat_checking:
                 # it is the first time we found a move we play before
-                self.repeat_check_move = (color, right_move[0])
+                # self.repeat_check_move = (color, right_move[0])
                 self.in_repeat_checking = True
             else:
-                # it is more than one time we found a move we play before
-                if (color, right_move[0]) != self.repeat_check_move:
-                    # current repeating move is not the one we found before
-                    # increase the repeat_move_number
-                    # stop repeating checking after (24) moves
-                    # as we think it wouldn't be necessary to check it 
-                    # if there are 24 continued repeating moves without seeing the first one we remember
-                    self.repeat_move_number += 1
-                    if self.repeat_move_number > 24:
-                        self.in_repeat_checking = False
-                        self.repeat_move_number = 0
-                else:
-                    #current repeating move is the right one we found before
-                    if not (self.go_board.output_board == self.board_snapshot).all():
-                        # the board we remember for the last repeating move is different from current board
-                        # remember current board.
-                        self.board_snapshot = self.go_board.output_board.copy() 
-                    else:
-                        # it is same move with same board state
-                        is_repeat = True
+                # it is a continued repeating move
+
+                self.all_repeat_move.append((color, right_move[0]))
+                is_repeat = True
         else:
             # it is a brand new move. reset the repeating checking setting
             self.in_repeat_checking = False
             self.repeat_move_number = 0
+            self.all_repeat_move = []
 
+        # found_none_repeat_move = False
         if is_repeat:
-            if len(move_and_predict) > 1:
-                right_move = move_and_predict[1]
-
+            for each_move_and_predict in move_and_predict:
+                if not (color, each_move_and_predict[0]) in self.all_repeat_move:
+                    right_move = each_move_and_predict
+                    # found_none_repeat_move = True
+                    break
                 
             
-                
-
-        # if the robot is repeating in three ko, select the second one
-        # if self.is_repeating() and len(move_and_predict) > 1:
-        #     right_move = move_and_predict[1]
-
-            
-            
-
-            # print ('# right move:' + str(right_move[0]) + ' with valueprediction:' + str(right_move[1]) + '       ')
-
         # use the right move even if it is lossing
         lossing_right_move = right_move
 
