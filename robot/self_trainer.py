@@ -1,5 +1,5 @@
 from go_core.goboard import GoBoard
-from network.tensor_model import TensorModel
+# from network.tensor_model import TensorModel
 from robot.simple_robot import SimpleRobot
 
 import time
