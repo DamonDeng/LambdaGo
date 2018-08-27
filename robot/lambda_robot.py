@@ -10,7 +10,7 @@ import random
 class LambdaRobot(object):
 
     def __init__(self, name='DefaultLambdaRobot', layer_number=19, old_model=None, board_size=19, komi=7.5, train_iter=2):
-        self.name = name
+        self.name = 'Lambda_' + name
         self.layer_number = layer_number
 
         self.board_size = board_size

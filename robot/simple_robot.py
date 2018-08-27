@@ -1,5 +1,5 @@
 from go_core.goboard import GoBoard
-from network.tensor_model import TensorModel
+from network.simple_model import SimpleModel
 
 import time
 import random
@@ -32,10 +32,10 @@ class SimpleRobot(object):
         self.reset()
 
         if old_model is None:
-            self.model = TensorModel(self.name, self.board_size, layer_number=self.layer_number)
+            self.model = SimpleModel(self.name, self.board_size, layer_number=self.layer_number)
         else:
             print ('Trying to load old model for continue training:' + old_model)
-            self.model = TensorModel(self.name, self.board_size, model_path=old_model, layer_number=self.layer_number)
+            self.model = SimpleModel(self.name, self.board_size, model_path=old_model, layer_number=self.layer_number)
         
     def reset(self):
         
