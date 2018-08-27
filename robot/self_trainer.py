@@ -17,7 +17,7 @@ class SelfTrainer(object):
 
         self.board_size = 19
 
-        self.max_play_move = 512
+        self.max_play_move = 1024
         self.ColorBlackChar = 'b'
         self.ColorWhiteChar = 'w'
 

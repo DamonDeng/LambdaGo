@@ -52,7 +52,7 @@ class LambdaGoBoard(object):
     # MoveResult_NotEmpty = 5
     # MoveResult_IsSuicide = 6
 
-    MaxMoveNumber = 1024
+    MaxMoveNumber = 2048
 
     def __init__(self, board_size=19):
         self.reset(board_size)
