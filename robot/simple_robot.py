@@ -475,7 +475,10 @@ class SimpleRobot(object):
         print (' Starting to train the model')
 
         training_length = len(board_states)
-
+        
+        # print (' training length:' + str(training_length))
+        # print (' score board is: ' + str(score_board))
+        
         training_y = []
 
         for i in range(training_length):
@@ -493,6 +496,8 @@ class SimpleRobot(object):
 
             s_index = batch_number*batch_size
             e_index = (batch_number+1)*batch_size
+            
+            # print ('len of current batch:' + str(len(board_states[s_index:e_index])))
 
             self.model.train(board_states[s_index:e_index], training_y[s_index:e_index], steps=self.train_iter)
 

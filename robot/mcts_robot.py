@@ -1,5 +1,5 @@
-from go_core.goboard import GoBoard
-from dnn.dual_head_model import DualHeadModel
+from go_core.lambda_goboard import LambdaGoBoard
+from network.dual_head_model import DualHeadModel
 from mcts.mcts_node import MCTSNode
 import numpy as np
 
@@ -14,7 +14,6 @@ class MCTSRobot(object):
         self.name = name
         self.layer_number = layer_number
         self.search_time = search_time
-
 
         self.train_iter = train_iter
 
@@ -58,9 +57,9 @@ class MCTSRobot(object):
         self.training_score = []
         self.training_move = []
 
-        self.simulate_board = GoBoard(self.board_size)
+        self.simulate_board = LambdaGoBoard(self.board_size)
 
-        self.go_board = GoBoard(self.board_size)
+        self.go_board = LambdaGoBoard(self.board_size)
 
 
 
@@ -73,13 +72,13 @@ class MCTSRobot(object):
 
         current_data = []
 
-        current_board = self.go_board.board
+        current_board = self.go_board.get_board()
 
         current_data.append(current_board)
 
-        if GoBoard.get_color_value(color) == GoBoard.ColorBlack:
+        if LambdaGoBoard.get_color_value(color) == LambdaGoBoard.ColorBlack:
             current_data.append(self.BlackIdentify)
-        elif GoBoard.get_color_value(color) == GoBoard.ColorWhite:
+        elif LambdaGoBoard.get_color_value(color) == LambdaGoBoard.ColorWhite:
             current_data.append(self.WhiteIdentify)
         else:
             raise Exception('Incorrect color character')
@@ -97,7 +96,7 @@ class MCTSRobot(object):
             current_move[row*self.board_size+col] = 1
             self.training_move.append(current_move)
 
-        is_valid, reason = self.go_board.apply_move(color, pos)
+        is_valid = self.go_board.apply_move(color, pos)
 
         # if not is_valid:
         #     print ('# incorrect move:' + color + '  pos:' + str(pos) + '  Reason:' + str(reason))
@@ -111,7 +110,7 @@ class MCTSRobot(object):
         # print(str(self.board))
 
     def showboard(self):
-        self.go_board.update_score_board()
+        # self.go_board.update_score_board()
         return str(self.go_board)
 
 
@@ -121,7 +120,7 @@ class MCTSRobot(object):
         self.root_node = MCTSNode()
 
         self.root_node.set_simulate_board(self.go_board)
-        current_color = GoBoard.get_color_value(color)
+        current_color = LambdaGoBoard.get_color_value(color)
         # root node is the node before current player play the stone, 
         # so the color of root node should be color of current color
         self.root_node.player_color = current_color
@@ -153,34 +152,7 @@ class MCTSRobot(object):
 
         right_move = (right_node.move, right_node.get_value())
 
-        display_string = "# Player: "
-        if GoBoard.get_color_value(color) == GoBoard.ColorBlack:
-            display_string = display_string + "Black    "
-        else:
-            display_string = display_string + "White    "
-        
-        move_string = ' Move:' + str(right_move[0]) + '                   '
-        value_string = ' Value:' + str(right_move[1]) + '                    '
-        visit_count_string = '    Count:' + str(right_node.visit_count) + '                     '
-        node_value_string = '   NodeValue:' + str(right_node.average_value) + '                    '
-        policy_value_string = '   Policy:' + str(right_node.policy_value) + '                     '
-
-        display_string = display_string + move_string[0:20] + visit_count_string[0:20]
-        display_string = display_string + value_string[0:25] + node_value_string[0:25] + policy_value_string[0:25]
-
-        if GoBoard.get_color_value(color) == GoBoard.ColorBlack:
-            print (display_string)
-            print ('# ')
-        else:
-            print ('# ')
-            print (display_string)
-
-        if abs(right_node.average_value) > 1:
-            print('# incorrect node:')
-            print (str(right_node))
-            time.sleep(20)
-
-        
+        self.display_result(color, right_move, right_node)
 
         # print ('Found right move:' + str(right_move[0]) + 'with value:' + str(right_move[1]))
         # print ('Visited count: ' + str(right_node.visit_count))
@@ -188,6 +160,8 @@ class MCTSRobot(object):
         # time.sleep(5)
 
         return right_move
+
+    
 
     def search_to_expand(self, current_node):
 
@@ -264,28 +238,28 @@ class MCTSRobot(object):
         # else:
         #     # copy data from parent node
         #     parent_color = parent_node.player_color
-        #     current_color = GoBoard.reverse_color_value(parent_color)
+        #     current_color = LambdaGoBoard.reverse_color_value(parent_color)
         #     # enemy_color = parent_node.player_color
 
         #     current_node.player_color = current_color
-        #     current_node.simulate_board = GoBoard(parent_node.simulate_board.board_size)
+        #     current_node.simulate_board = LambdaGoBoard(parent_node.simulate_board.board_size)
         #     current_node.simulate_board.copy_from(parent_node.simulate_board)
 
-        #     current_node.simulate_board.apply_move(GoBoard.get_color_char(current_color), current_node.move)
+        #     current_node.simulate_board.apply_move(LambdaGoBoard.get_color_char(current_color), current_node.move)
 
         current_color = current_node.player_color
-        child_color = GoBoard.reverse_color_value(current_color)
+        child_color = LambdaGoBoard.reverse_color_value(current_color)
 
         # current_data_list = []
 
         current_data = []
 
-        current_board = current_node.simulate_board.board
+        current_board = current_node.simulate_board.get_board()
 
         current_data.append(current_board)
-        if current_color == GoBoard.ColorBlack:
+        if current_color == LambdaGoBoard.ColorBlack:
             current_data.append(self.BlackIdentify)
-        elif current_color == GoBoard.ColorWhite:
+        elif current_color == LambdaGoBoard.ColorWhite:
             current_data.append(self.WhiteIdentify)
         else:
             raise Exception('Incorrect color character')
@@ -319,10 +293,10 @@ class MCTSRobot(object):
 
             new_child = MCTSNode()
 
-            new_child.simulate_board = GoBoard(self.board_size)
+            new_child.simulate_board = LambdaGoBoard(self.board_size)
             new_child.simulate_board.copy_from(current_node.simulate_board)
 
-            is_valid, reason = new_child.simulate_board.apply_move(GoBoard.get_color_char(current_color), move)
+            is_valid, reason = new_child.simulate_board.apply_move(LambdaGoBoard.get_color_char(current_color), move)
 
             if is_valid:
                 new_child.move = move
@@ -372,6 +346,34 @@ class MCTSRobot(object):
         return right_move[0]
 
 
+    def display_result(self, color, right_move, right_node):
+
+        display_string = "# Player: "
+        if LambdaGoBoard.get_color_value(color) == LambdaGoBoard.ColorBlack:
+            display_string = display_string + "Black    "
+        else:
+            display_string = display_string + "White    "
+        
+        move_string = ' Move:' + str(right_move[0]) + '                   '
+        value_string = ' Value:' + str(right_move[1]) + '                    '
+        visit_count_string = '    Count:' + str(right_node.visit_count) + '                     '
+        node_value_string = '   NodeValue:' + str(right_node.average_value) + '                    '
+        policy_value_string = '   Policy:' + str(right_node.policy_value) + '                     '
+
+        display_string = display_string + move_string[0:20] + visit_count_string[0:20]
+        display_string = display_string + value_string[0:25] + node_value_string[0:25] + policy_value_string[0:25]
+
+        if LambdaGoBoard.get_color_value(color) == LambdaGoBoard.ColorBlack:
+            print (display_string)
+            print ('# ')
+        else:
+            print ('# ')
+            print (display_string)
+
+        if abs(right_node.average_value) > 1:
+            print('# incorrect node:')
+            print (str(right_node))
+            time.sleep(20)
         
     def train(self, board_states, move_sequence, score_board):
 
@@ -410,7 +412,7 @@ class MCTSRobot(object):
 
         self.simulate_board_list = []
         for i in range (self.board_size*self.board_size):
-            self.simulate_board_list.append(GoBoard(self.board_size))
+            self.simulate_board_list.append(LambdaGoBoard(self.board_size))
 
     def get_current_state(self):
         return self.go_board.board

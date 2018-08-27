@@ -8,6 +8,12 @@ class StoneGroup(object):
         self.stones = set()
         self.liberties = set()
 
+    def copy_from(self, source_group):
+        self.color_value = source_group.color_value
+        self.id = source_group.id
+        self.stones = source_group.stones.copy()
+        self.liberties = source_group.liberties.copy()
+
     def add_stone(self, pos_index):
         self.stones.add(pos_index)
 
@@ -38,15 +44,15 @@ class LambdaGoBoard(object):
     ColorWhiteChar = 'w'
     ColorBlackChar = 'b'
 
-    MoveResult_Normal = 0
-    MoveResult_SolidEye = 1
-    MoveResult_IsKo = 2
-    MoveResult_OutOfMax = 3
-    MoveResult_Pass = 4
-    MoveResult_NotEmpty = 5
-    MoveResult_IsSuicide = 6
+    # MoveResult_Normal = 0
+    # MoveResult_SolidEye = 1
+    # MoveResult_IsKo = 2
+    # MoveResult_OutOfMax = 3
+    # MoveResult_Pass = 4
+    # MoveResult_NotEmpty = 5
+    # MoveResult_IsSuicide = 6
 
-    MaxMoveNumber = 2048
+    MaxMoveNumber = 1024
 
     def __init__(self, board_size=19):
         self.reset(board_size)
@@ -57,9 +63,14 @@ class LambdaGoBoard(object):
         # score_board_updated = False
 
         self.group_id = 0
+
         self.board = np.zeros((self.board_size+2, self.board_size+2), dtype=int)
-        self.score_board = np.zeros((self.board_size+2, self.board_size+2), dtype=int)
-        self.score_marker = np.zeros((self.board_size+2, self.board_size+2), dtype=int)
+        self.output_board = np.zeros((self.board_size, self.board_size), dtype=int)
+        self.simulate_board = np.zeros((self.board_size, self.board_size), dtype=int)
+
+
+        self.score_board = np.zeros((self.board_size, self.board_size), dtype=int)
+        self.score_marker = np.zeros((self.board_size, self.board_size), dtype=int)
 
         self.empty_pos = set()
         # self.black_pos = set()
@@ -77,8 +88,18 @@ class LambdaGoBoard(object):
         self.ko_pos = set()
 
         self.stone_group = []
+        self.stone_group_dict = dict()
 
         self.last_pos_index = None
+
+        self.score_board_updated = False
+        self.score = 0
+        self.white_score = 0
+        self.black_score = 0
+
+        self.review_record = np.zeros((self.board_size, self.board_size), dtype=int)
+        self.review_has_white = 0
+        self.review_has_black = 0
 
         for row in range(self.board_size+2):
             temp_group = []
@@ -93,7 +114,8 @@ class LambdaGoBoard(object):
         self.black_valid = self.empty_pos - self.black_suicide - self.black_eye
         self.white_valid = self.empty_pos - self.white_suicide - self.white_eye
 
-                
+    def get_board(self):
+        return self.output_board
 
     def get_group_id(self):
         self.group_id = self.group_id + 1
@@ -102,13 +124,50 @@ class LambdaGoBoard(object):
 
     def copy_from(self, source_board):
         self.board_size = source_board.board_size
+        self.group_id = source_board.group_id
+
         self.board = source_board.board.copy()
+        self.output_board = source_board.output_board.copy()
+        
         self.score_board = source_board.score_board.copy()
         self.score_marker = source_board.score_marker.copy()
 
         self.empty_pos = source_board.empty_pos.copy()
-        self.black_pos = source_board.black_pos.copy()
-        self.white_pos = source_board.white_pos.copy()
+        # self.black_pos = source_board.black_pos.copy()
+        # self.white_pos = source_board.white_pos.copy()
+
+        self.black_valid = source_board.black_valid.copy()
+        self.white_valid = source_board.white_valid.copy()
+
+        self.score_board_updated = source_board.score_board_updated
+        self.score_board = source_board.score_board.copy()
+        self.score = source_board.score
+        self.white_score = source_board.white_score
+        self.black_score = source_board.black_score
+
+        self.stone_group = []
+
+        for row in range(self.board_size+2):
+            temp_group = []
+            for col in range(self.board_size+2):
+                temp_group.append(None)
+            self.stone_group.append(temp_group)
+
+        self.stone_group_dict = dict()
+
+        for inner_group_id in source_board.stone_group_dict.keys():
+            temp_group = StoneGroup(1, 1)
+            temp_group.copy_from(source_board.stone_group_dict[inner_group_id])
+            self.stone_group_dict[inner_group_id] = temp_group
+
+            for inner_stone in temp_group.stones:
+                (inner_row_index, inner_col_index) = inner_stone
+                self.stone_group[inner_row_index][inner_col_index] = temp_group
+
+    def copy(self):
+        new_board = LambdaGoBoard(self.board_size)
+        new_board.copy_from(self)
+        return new_board
         
     def get_valid_move(self, color):
         if color == LambdaGoBoard.ColorBlackChar:
@@ -120,6 +179,7 @@ class LambdaGoBoard(object):
     def apply_move(self, color, pos):
         color_value = LambdaGoBoard.get_color_value(color)
         self.apply_move_value(color_value, pos)
+        self.score_board_updated = False
 
 
     def apply_move_value(self, color_value, pos):
@@ -145,6 +205,7 @@ class LambdaGoBoard(object):
 
         if neighbour_number == 0:
             target_group = StoneGroup(self.get_group_id(), color_value)
+            self.stone_group_dict[target_group.id] = target_group
         else:
             target_group = current_neighbour[0]
             target_group.remove_liberty((row_index, col_index))
@@ -170,6 +231,9 @@ class LambdaGoBoard(object):
             for i in range (1, neighbour_number):
                 self.update_stone_group(current_neighbour[i], target_group)
 
+            for i in range (1, neighbour_number):
+                self.stone_group_dict.pop(current_neighbour[i].id)
+
             # print ('# after merging, the liberty of current group is:' + str(target_group.get_liberty_number()))
 
             # print ('# liberties:')
@@ -177,7 +241,10 @@ class LambdaGoBoard(object):
             #     print ('# ' + str(pos))
         
         self.stone_group[row_index][col_index] = target_group
+
         self.board[row_index][col_index] = color_value
+        self.output_board[row_index-1][col_index-1] = color_value
+        
 
         if (row_index, col_index) in self.single_empty_pos_index:
             self.single_empty_pos_index.remove((row_index, col_index))
@@ -234,7 +301,10 @@ class LambdaGoBoard(object):
                     remove_enemy_group_num += 1
                     if enemy_neighbour[i].get_stone_number() == 1:
                         last_single_remove_pos_index = list(enemy_neighbour[i].stones)[0]
+                    # remove all the stones in the enemy group which has no liberty left
                     self.remove_all_in_group(enemy_neighbour[i])
+                    # remove the group in the stone_group_dict record
+                    self.stone_group_dict.pop(enemy_neighbour[i].id)
 
         # if current move remove just one stone, remember the location of that stone
         # so that we can check whether there is a ko move.
@@ -366,6 +436,67 @@ class LambdaGoBoard(object):
 
         self.last_pos_index = (row_index, col_index)
 
+    def simulate_all_valid_move(self, color):
+        move_and_result = dict()
+
+        color_value = LambdaGoBoard.get_color_value(color)
+
+        if color == LambdaGoBoard.ColorBlackChar:
+            valid_set = self.black_valid
+        elif color == LambdaGoBoard.ColorWhiteChar:
+            valid_set = self.white_valid
+        else:
+            return None
+
+        for pos in valid_set:
+            self.simulate_move_value(color_value, pos)
+            move_and_result[pos] = self.simulate_board.copy()
+
+        move_and_result[None] = self.output_board
+
+        return move_and_result
+
+
+    def simulate_move_value(self, color_value, pos):
+
+        self.simulate_board = self.output_board.copy()
+
+        if pos is None:
+            # it is a pass move
+            # simuate board is same with last output board
+            return True
+
+        (row_index, col_index) = self.get_index(pos)
+
+        if self.board[row_index][col_index] != self.ColorEmpty:
+            # it is not empty, failed
+            return False
+
+        # as the simulating move is a valid move, so there is no suicide, we can just add current stone in simulating board
+        self.simulate_board[row_index-1, col_index-1] = color_value
+
+        # check whether we need to remove enemy around
+        enemy_color_value = self.reverse_color_value(color_value)
+
+        enemy_neighbour = self.get_neighbour_group(enemy_color_value, row_index, col_index)
+
+        neighbour_number = len(enemy_neighbour)
+
+        if neighbour_number > 0:
+            for i in range(neighbour_number):
+                if enemy_neighbour[i].get_liberty_number() == 1:
+                    # the enemy neighbour only has one liberty left, 
+                    # it shoule be remove, as current liberty will be remove
+                    for each_neighbour_stone in enemy_neighbour[i].stones:
+                        (row_index, col_index) = each_neighbour_stone
+                        self.simulate_board[row_index-1][col_index-1] = LambdaGoBoard.ColorEmpty
+
+
+    
+
+
+        
+
 
     def get_neighbour_group(self, color_value, row_index, col_index):
         result = []
@@ -478,6 +609,7 @@ class LambdaGoBoard(object):
             neighbour.add_liberty((row_index, col_index))
 
         self.board[row_index][col_index] = self.ColorEmpty
+        self.output_board[row_index-1][col_index-1] = self.ColorEmpty
 
         # if original_color_value == LambdaGoBoard.ColorBlack:
         #     self.black_pos.remove((row_index,col_index))
@@ -532,9 +664,101 @@ class LambdaGoBoard(object):
 
 
 
-    # def update_score_board(self):
+    def update_score_board(self):
 
-    #     return True
+        if self.score_board_updated:
+            return True
+
+        
+        self.score_board = self.output_board.copy()
+        self.score_marker = abs(self.output_board)
+
+        for row in range(0, self.board_size):
+            for col in range(0, self.board_size):
+                if self.score_marker[row][col] != 1:
+                    self.score_empty_point(row, col)
+        
+        self.score = self.score_board.sum()
+        self.white_score = (abs(self.score_board).sum() - self.score)/2
+        self.black_score = self.score + self.white_score
+
+        self.score_board_updated = True
+        return True
+
+    def score_empty_point(self, row, col):
+
+        self.review_record = np.zeros((self.board_size, self.board_size), dtype=int)
+        self.review_has_white = 0
+        self.review_has_black = 0
+
+        review_result = []
+
+        # print ('review_result:' + str(review_result))
+
+        review_result = self.empty_score_review(row, col, review_result)
+
+        # print ('review_result:' + str(review_result))
+
+        for single_review_pos in review_result:
+            (i, j) = single_review_pos
+            self.score_marker[i][j] = 1
+            if self.review_has_black == 1 and self.review_has_white == 1:
+                self.score_board[i][j] = self.ColorEmpty
+            elif self.review_has_black == 1:
+                self.score_board[i][j] = self.ColorBlack
+            elif self.review_has_white == 1:
+                self.score_board[i][j] = self.ColorWhite
+
+
+    def empty_score_review(self, row, col, review_result):
+
+        # print('# reviewing: ' + str(row) + ',' + str(col))
+        if row < 0 or row >= self.board_size or col < 0 or col >= self.board_size:
+            # current location is out of board, return
+            return review_result
+
+        if self.review_record[row][col] == 1:
+            # this point has been reviewed, return
+            return review_result
+
+        if self.output_board[row][col] == self.ColorEmpty:
+            # color of current stone is empty point, need to check the location around.
+
+            # set current location as reviewd
+            self.review_record[row][col] = 1
+            review_result.append((row, col))
+
+            # start to check the location around
+            review_result = self.empty_score_review(row+1, col, review_result)
+
+            review_result = self.empty_score_review(row, col+1, review_result)
+            
+            review_result = self.empty_score_review(row-1, col, review_result)
+            
+            review_result = self.empty_score_review(row, col-1, review_result)
+
+            # beside the point in review history, all the neighbours are dead, return True
+            # print('# stone around are dead')
+            return review_result
+
+        elif self.output_board[row][col] == self.ColorBlack:
+
+            self.review_has_black = 1
+            # current location is black, this empty space has black around.
+            return review_result
+
+        elif self.output_board[row][col] == self.ColorWhite:
+
+            self.review_has_white = 1
+            # current location is black, this empty space has white around.
+            return review_result
+
+    def get_score(self):
+        if self.score_board_updated:
+            return self.score
+        else:
+            self.update_score_board()
+            return self.score
 
 
     # convert the color letter to color value
@@ -633,6 +857,62 @@ class LambdaGoBoard(object):
         result = result + row_string
         
         return result
+
+    def get_score_debug_string(self):
+
+        result = '# GoBoard\n'
+        row_string = '#      '
+        char_string = 'A B C D E F G H J K L M N O P Q R S T '
+        row_char_string = char_string[0:self.board_size*2]
+
+        row_string = row_string + row_char_string + '\n'
+        
+        result =  result + row_string
+        
+        for i in range(self.board_size - 1, -1, -1):
+            line_number = '  ' + str(i+1) + '   '
+            line = '# ' + line_number[-5:]
+            for j in range(0, self.board_size):
+                if self.output_board[i][j] == self.ColorBlack:
+                    line = line + '\033[1;31mx\033[0m'
+                if self.output_board[i][j] == self.ColorWhite:
+                    line = line + '\033[1;32mo\033[0m'
+                if self.output_board[i][j] == self.ColorEmpty:
+                    if self.score_board[i][j] == self.ColorBlack:
+                        line = line + '\033[1;31m*\033[0m'
+                    elif self.score_board[i][j] == self.ColorWhite:
+                        line = line + '\033[1;32m*\033[0m'
+                    else:
+                        line = line + '.'
+
+                line = line + ' '
+
+            line = line + line_number[:4]
+
+            result = result + line + '\n'
+
+        result = result + row_string
+
+        score_string = '#'
+
+        if self.score_board_updated:
+            total_score_string = '          ' + str(self.score) + '       '
+            # black_score_string = '          ' + str(self.score_board_sum_black) + '       '
+            # white_score_string = '          ' + str(self.score_board_sum_white) + '       '
+
+            score_string = score_string + ' Score: ' + total_score_string[-11:]
+            # score_string = score_string + ',  Black: ' + black_score_string[-11:]
+            # score_string = score_string + ', White: ' + white_score_string[-11:]
+            score_string = score_string + '\n'
+            
+        else:
+
+            score_string = score_string + ' Score: NotCounted,  Black: NotCounted, White: NotCounted\n' 
+        
+        result = result + score_string
+
+        return result
+
 
     def get_border_debug_string(self):
         result = '# GoBoard\n'
@@ -806,7 +1086,9 @@ class LambdaGoBoard(object):
     def __str__(self):
         result = ''
         
-        result = result + self.get_standard_debug_string()
+        # result = result + self.get_standard_debug_string()
+
+        result = result + self.get_score_debug_string()
         
         # result = result + self.get_border_debug_string()
 

@@ -1,4 +1,5 @@
 from robot.simple_robot import SimpleRobot
+from robot.lambda_robot import LambdaRobot
 from robot.mcts_robot import MCTSRobot
 from robot.self_trainer import SelfTrainer
 
@@ -11,6 +12,9 @@ def start_self_train(robot='SimpleRobot', res_layer_number=19, steps=100, old_mo
         if robot == 'MCTSRobot':
             teacher_model = MCTSRobot(name='Teacher', layer_number=res_layer_number, board_size=board_size, komi=komi)
             student_model = MCTSRobot(name='Student', layer_number=res_layer_number, board_size=board_size, komi=komi)
+        elif robot == 'LambdaRobot':
+            teacher_model = LambdaRobot(name='Teacher', layer_number=res_layer_number, board_size=board_size, komi=komi, train_iter=train_iter)
+            student_model = LambdaRobot(name='Student', layer_number=res_layer_number, board_size=board_size, komi=komi, train_iter=train_iter)
         else: # 'SimpleRobot':
             teacher_model = SimpleRobot(name='Teacher', layer_number=res_layer_number, board_size=board_size, komi=komi, train_iter=train_iter)
             student_model = SimpleRobot(name='Student', layer_number=res_layer_number, board_size=board_size, komi=komi, train_iter=train_iter)
@@ -20,7 +24,9 @@ def start_self_train(robot='SimpleRobot', res_layer_number=19, steps=100, old_mo
         if robot == 'MCTSRobot':
             teacher_model = MCTSRobot(name='Teacher', layer_number=res_layer_number, old_model=old_model, board_size=board_size, komi=komi)
             student_model = MCTSRobot(name='Student', layer_number=res_layer_number, old_model=old_model, board_size=board_size, komi=komi)
-            
+        elif robot == 'LambdaRobot':
+            teacher_model = LambdaRobot(name='Teacher', layer_number=res_layer_number, old_model=old_model, board_size=board_size, komi=komi, train_iter=train_iter)
+            student_model = LambdaRobot(name='Student', layer_number=res_layer_number, old_model=old_model, board_size=board_size, komi=komi, train_iter=train_iter)    
         else: # 'SimpleRobot':
             teacher_model = SimpleRobot(name='Teacher', layer_number=res_layer_number, old_model=old_model, board_size=board_size, komi=komi, train_iter=train_iter)
             student_model = SimpleRobot(name='Student', layer_number=res_layer_number, old_model=old_model, board_size=board_size, komi=komi, train_iter=train_iter)

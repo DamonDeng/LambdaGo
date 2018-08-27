@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
-class DualHeadModel(object):
+class DualHeadWinModel(object):
 
     def __init__(self, name='DefaultModel', board_size=19, model_path=None, layer_number=19):
         self.board_size = board_size
@@ -45,7 +45,8 @@ class DualHeadModel(object):
         print('# trying to define model in name scope:' + self.name)
 
         reshaped_input_x = tf.reshape(input_x, [-1, self.board_size, self.board_size, 2])
-        reshaped_input_y = tf.reshape(input_y, [-1, self.board_size, self.board_size, 1])
+        # reshaped_input_y = tf.reshape(input_y, [-1, self.board_size, self.board_size, 1])
+        reshaped_input_y = tf.reshape(input_y, [-1, 1, 1])
         reshaped_input_policy_y = tf.reshape(input_policy_y, [-1, (self.board_size*self.board_size+1)])
 
         with tf.name_scope(self.name) as name_scope:
@@ -83,8 +84,8 @@ class DualHeadModel(object):
             value_short_cut = short_cut
             policy_short_cut = short_cut
 
-            value_head_layer_number = 2
-            policy_head_layer_number = 2
+            value_head_layer_number = 1
+            policy_head_layer_number = 1
 
             for i in range(value_head_layer_number):
                 conv_in = tf.layers.conv2d(
@@ -116,7 +117,7 @@ class DualHeadModel(object):
                 activation=tf.nn.tanh,
                 name = name_scope + 'policy_last_conv')
 
-            flatten_layer = tf.contrib.layers.flatten(policy_last_conv)
+            flatten_policy = tf.contrib.layers.flatten(policy_last_conv)
 
             last_conv = tf.layers.conv2d(
                 inputs=value_short_cut,
@@ -127,16 +128,22 @@ class DualHeadModel(object):
                 name = name_scope + 'last_conv')
             # shape: [None,19,19,1]
 
+            flatten_value = tf.contrib.layers.flatten(last_conv)
+
             move_number = self.board_size*self.board_size+1
 
-            policy_fully_connected = tf.layers.dense(inputs=flatten_layer, units=move_number, activation=tf.nn.tanh)
+            policy_fully_connected = tf.layers.dense(inputs=flatten_policy, units=move_number, activation=tf.nn.tanh)
             policy_result = tf.nn.softmax(logits=policy_fully_connected)
             
             cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=reshaped_input_policy_y, logits=policy_fully_connected, name='cross_entropy')
             policy_loss = tf.reduce_mean(cross_entropy, name='loss')
             
-            value_loss = tf.reduce_mean(tf.squared_difference(last_conv, reshaped_input_y))
-            value_result = tf.reduce_sum(last_conv, [1,2,3])
+           
+
+            value_result = tf.layers.dense(inputs=flatten_value, units=1, activation=tf.nn.tanh)
+
+            value_loss = tf.reduce_mean(tf.squared_difference(value_result, reshaped_input_y))
+            # value_result = tf.reduce_sum(last_conv, [1,2,3])
 
             total_loss = policy_loss + value_loss
 

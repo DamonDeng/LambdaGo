@@ -1,5 +1,5 @@
 from go_core.goboard import GoBoard
-from dnn.tensor_model import TensorModel
+from network.tensor_model import TensorModel
 from robot.simple_robot import SimpleRobot
 
 import time
@@ -124,7 +124,7 @@ class SelfTrainer(object):
 
             score_board = black_robot.get_score_board()
 
-            return True, black_score, board_states, move_sequence, score_board
+            return both_pass, black_score, board_states, move_sequence, score_board
 
 
     def self_train(self, iter_number = 10):

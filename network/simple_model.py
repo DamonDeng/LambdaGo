@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
-class TensorModel(object):
+class SimpleModel(object):
 
     def __init__(self, name='DefaultModel', board_size=19, model_path=None, layer_number=19):
         self.board_size = board_size
@@ -94,11 +94,11 @@ class TensorModel(object):
             # shape: [None,19,19,1]
 
             loss = tf.reduce_mean(tf.squared_difference(last_conv, reshaped_input_y))
-            # sum_result = tf.reduce_sum(last_conv, [1,2,3])
+            sum_result = tf.reduce_sum(last_conv, [1,2,3])
 
             round_result = tf.round(last_conv)
 
-            sum_result = tf.reduce_sum(round_result, [1,2,3])
+            # sum_result = tf.reduce_sum(round_result, [1,2,3])
 
         return sum_result, loss
 
