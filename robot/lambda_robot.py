@@ -32,7 +32,7 @@ class LambdaRobot(object):
         self.repeat_check_move = None
         self.board_snapshot = np.zeros((self.board_size, self.board_size))
         self.repeat_move_number = 0
-        self.all_repeat_move = []
+        self.all_repeat_move = set()
         
 
     def reset_board(self):
@@ -145,30 +145,55 @@ class LambdaRobot(object):
         is_repeat = False
 
         if (color, right_move[0]) in self.move_record:
+
             if not self.in_repeat_checking:
-                # it is the first time we found a move we play before
-                # self.repeat_check_move = (color, right_move[0])
+                # after last brand new move, it is the first time we found a move we play before
+                # enable repeat checking and start repeat checking
                 self.in_repeat_checking = True
+                self.repeat_move_number = 0
+                self.all_repeat_move = set()
+
+                # current move will still be apply, so we add current move in all_repeat_move
+                self.repeat_move_number += 1
+                self.all_repeat_move.add((color, right_move[0]))
             else:
-                # it is a continued repeating move
+                # in repeat checking status
+                # at least it is the second time we found continued repeat move.
 
-                self.all_repeat_move.append((color, right_move[0]))
-                is_repeat = True
-        else:
-            # it is a brand new move. reset the repeating checking setting
-            self.in_repeat_checking = False
-            self.repeat_move_number = 0
-            self.all_repeat_move = []
-
-        # found_none_repeat_move = False
-        if is_repeat:
-            for each_move_and_predict in move_and_predict:
-                if not (color, each_move_and_predict[0]) in self.all_repeat_move:
-                    right_move = each_move_and_predict
-                    # found_none_repeat_move = True
-                    break
+                # add current 
+                # self.repeat_move_number += 1
+                # self.all_repeat_move.add((color, right_move[0]))
                 
-            
+                # found_none_repeat_move = False
+
+                for each_move_and_predict in move_and_predict:
+                    if not (color, each_move_and_predict[0]) in self.all_repeat_move:
+                        right_move = each_move_and_predict
+                        # found_none_repeat_move = True
+                        break
+
+                if (color, right_move[0]) in self.move_record:
+                    # the move we found is still a move which has been played before
+                    self.repeat_move_number += 1
+                    self.all_repeat_move.add((color, right_move[0]))
+                else:
+                    # the move we found is a brand new one, disable repeat checking
+                    self.in_repeat_checking = False
+
+                # if found_none_repeat_move:
+                #     # none repeat move was found, disable repeat checking.
+                #     self.in_repeat_checking = False
+                # else:
+                #     # didn't find none repeat move, the original repeat move will be applied.
+                #     # add current move in all_repeat_move
+                #     self.repeat_move_number += 1
+                #     self.all_repeat_move.add((color, right_move[0]))
+                
+        else:
+            # disable repeat checking
+            self.in_repeat_checking = False
+        
+
         # use the right move even if it is lossing
         lossing_right_move = right_move
 
@@ -228,7 +253,7 @@ class LambdaRobot(object):
         #     lossing_right_move = move_and_score[random_index]
 
         
-        self.display_result(color, right_move, best_move_is_lossing, lossing_right_move)
+        self.display_result(color, right_move, best_move_is_lossing, lossing_right_move, is_repeat)
         
         
         if best_move_is_lossing:
@@ -236,7 +261,12 @@ class LambdaRobot(object):
         else:
             return right_move
 
-    def display_result(self, color, right_move, best_move_is_lossing, lossing_right_move):
+    def display_result(self, color, right_move, best_move_is_lossing, lossing_right_move, is_repeat):
+
+        if LambdaGoBoard.get_color_value(color) == LambdaGoBoard.ColorBlack:
+            print ('# Player: Black' + ' Move number:' + str(self.go_board.move_number))
+        elif LambdaGoBoard.get_color_value(color) == LambdaGoBoard.ColorWhite:
+            print ('# Player: White' + ' Move number:' + str(self.go_board.move_number))
         display_string = '#'
         if LambdaGoBoard.get_color_value(color) == LambdaGoBoard.ColorBlack:
             display_string = display_string + ' Black Player: ' + self.name + '    '
@@ -278,6 +308,17 @@ class LambdaRobot(object):
         else:
             print ('# ')
             print (display_string)
+
+        if is_repeat:
+            repeat_string = '# '
+            repeat_string = repeat_string + 'InRepeatChecking:' + str(self.in_repeat_checking)
+            repeat_string = repeat_string + '        Repeating move number:' + str(self.repeat_move_number)
+            repeat_string = repeat_string + '        Repeat move record number:' + str(len(self.all_repeat_move))
+            
+            print (repeat_string)
+        else:
+            print '#                                                                                                         ' \
+                + '                 '
 
 
 
@@ -333,6 +374,12 @@ class LambdaRobot(object):
 
     def reset(self):
         self.go_board = LambdaGoBoard(self.board_size)
+        self.move_record = []
+        self.in_repeat_checking = False
+        self.repeat_check_move = None
+        self.board_snapshot = np.zeros((self.board_size, self.board_size))
+        self.repeat_move_number = 0
+        self.all_repeat_move = set()
 
     def save_model(self, model_path):
         self.model.save_model(model_path)

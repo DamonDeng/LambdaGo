@@ -60,7 +60,7 @@ class LambdaGoBoard(object):
     def reset(self, board_size): 
         self.board_size = board_size
 
-        # score_board_updated = False
+        self.move_number = 1
 
         self.group_id = 0
 
@@ -180,6 +180,7 @@ class LambdaGoBoard(object):
         color_value = LambdaGoBoard.get_color_value(color)
         self.apply_move_value(color_value, pos)
         self.score_board_updated = False
+        self.move_number += 1
 
 
     def apply_move_value(self, color_value, pos):

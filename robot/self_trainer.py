@@ -257,14 +257,16 @@ class SelfTrainer(object):
 
         win_string = '# Black Win:' + str(self.black_win_times) + '      White Win:' + str(self.white_win_times) 
         win_string = win_string + '      Student Win:' + str(self.student_win_as_black + self.student_win_as_white)
+        win_string = win_string + ' (' + str(round(self.student_win_rate*100, 1)) + '% '
+        win_string = win_string + '   B:' + str(self.student_win_as_black) + '   W:' + str(self.student_win_as_white) + ')'
         win_string = win_string + '      Teacher Win:' + str(self.teacher_win_as_black + self.teacher_win_as_white)
-        win_string = win_string + '      StudentWinRate:' + str(round(self.student_win_rate*100, 1)) + '%'
-        win_string = win_string + '      TeacherWinRate:' + str(round(self.teacher_win_rate*100, 1)) + '%'
+        win_string = win_string + ' (' + str(round(self.teacher_win_rate*100, 1)) + '% '
+        win_string = win_string + '   B:' + str(self.teacher_win_as_black) + '   W:' + str(self.teacher_win_as_white) + ')'
         win_string = win_string + '      GamePlayed:' + str(self.game_played)
         
         print (win_string)
-        print ('# Black Win as student:' + str(self.student_win_as_black) + '       White Win as teacher:' + str(self.teacher_win_as_white))
-        print ('# Black Win as teacher:' + str(self.teacher_win_as_black) + '       White Win as student:' + str(self.student_win_as_white))
-        print ('# Current Black Player:' + self.current_black_player)
+        # print ('# Black Win as student:' + str(self.student_win_as_black) + '       White Win as teacher:' + str(self.teacher_win_as_white))
+        # print ('# Black Win as teacher:' + str(self.teacher_win_as_black) + '       White Win as student:' + str(self.student_win_as_white))
+        # print ('# Current Black Player:' + self.current_black_player)
         print ('#-------------------------------------------------------------#')
 
