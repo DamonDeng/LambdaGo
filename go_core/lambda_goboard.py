@@ -1,5 +1,7 @@
 import numpy as np
 
+from global_config.config import Config
+
 class StoneGroup(object):
 
     def __init__(self, id, color_value):

@@ -1,5 +1,6 @@
 from go_core.lambda_goboard import LambdaGoBoard
 from network.simple_model import SimpleModel
+from global_config.config import Config
 
 import numpy as np
 
@@ -9,19 +10,19 @@ import random
 
 class LambdaRobot(object):
 
-    def __init__(self, name='DefaultLambdaRobot', layer_number=19, old_model=None, board_size=19, komi=7.5, train_iter=2):
+    def __init__(self, name='DefaultLambdaRobot', old_model=None):
         self.name = 'Lambda_' + name
-        self.layer_number = layer_number
+        self.layer_number = Config.layer_number
 
-        self.board_size = board_size
+        self.board_size = Config.board_size
         
         self.max_play_move = 1024
         self.ColorBlackChar = 'b'
         self.ColorWhiteChar = 'w'
 
-        self.komi = komi
+        self.komi = Config.komi
 
-        self.train_iter = train_iter
+        self.train_iter = Config.train_iter
 
         self.go_board = LambdaGoBoard(self.board_size)
 
@@ -146,6 +147,8 @@ class LambdaRobot(object):
 
         if (color, right_move[0]) in self.move_record:
 
+            is_repeat = True
+
             if not self.in_repeat_checking:
                 # after last brand new move, it is the first time we found a move we play before
                 # enable repeat checking and start repeat checking
@@ -264,9 +267,9 @@ class LambdaRobot(object):
     def display_result(self, color, right_move, best_move_is_lossing, lossing_right_move, is_repeat):
 
         if LambdaGoBoard.get_color_value(color) == LambdaGoBoard.ColorBlack:
-            print ('# Player: Black' + ' Move number:' + str(self.go_board.move_number))
+            print ('# Player: Black' + '        Move number:' + str(self.go_board.move_number))
         elif LambdaGoBoard.get_color_value(color) == LambdaGoBoard.ColorWhite:
-            print ('# Player: White' + ' Move number:' + str(self.go_board.move_number))
+            print ('# Player: White' + '        Move number:' + str(self.go_board.move_number))
         display_string = '#'
         if LambdaGoBoard.get_color_value(color) == LambdaGoBoard.ColorBlack:
             display_string = display_string + ' Black Player: ' + self.name + '    '
@@ -309,16 +312,17 @@ class LambdaRobot(object):
             print ('# ')
             print (display_string)
 
-        if is_repeat:
-            repeat_string = '# '
-            repeat_string = repeat_string + 'InRepeatChecking:' + str(self.in_repeat_checking)
-            repeat_string = repeat_string + '        Repeating move number:' + str(self.repeat_move_number)
-            repeat_string = repeat_string + '        Repeat move record number:' + str(len(self.all_repeat_move))
-            
-            print (repeat_string)
-        else:
-            print '#                                                                                                         ' \
-                + '                 '
+        # if is_repeat:
+        repeat_string = '# '
+        repeat_string = repeat_string + ('InRepeatChecking:' + str(self.in_repeat_checking) + '         ')[0:28]
+        repeat_string = repeat_string + ('Repeating move number:' + str(self.repeat_move_number) + '          ')[0:28]
+        repeat_string = repeat_string + ('Repeat move record number:' + str(len(self.all_repeat_move)) + '         ')[0:28]
+        repeat_string = repeat_string + '                                  '
+        
+        print (repeat_string)
+        # else:
+        #     print '#                                                                                                         ' \
+        #         + '                 '
 
 
 
@@ -332,16 +336,39 @@ class LambdaRobot(object):
         # print (' training length:' + str(training_length))
         # print (' score board is: ' + str(score_board))
 
+        training_x = []
         training_y = []
 
-        for i in range(training_length):
+        score_board_90 = np.rot90(score_board)
+        score_board_180 = np.rot90(score_board_90)
+        score_board_270 = np.rot90(score_board_180)
+
+        for each_state in board_states:
+            each_state_90 = np.rot90(each_state)
+            each_state_180 = np.rot90(each_state_90)
+            each_state_270 = np.rot90(each_state_180)
+            
+            training_x.append(each_state)
             training_y.append(score_board)
+
+            training_x.append(each_state_90)
+            training_y.append(score_board_90)
+
+            training_x.append(each_state_180)
+            training_y.append(score_board_180)
+
+            training_x.append(each_state_270)
+            training_y.append(score_board_270)
+
+
+
+        
 
         # set the batch_size to half of the max stone number
         # to make sure that the model can be train only if the robot can be used to play.
 
         batch_size = self.board_size*self.board_size/2
-        total_train_sample = len(board_states)
+        total_train_sample = len(training_x)
 
         batch_number = 0
 
@@ -352,12 +379,12 @@ class LambdaRobot(object):
 
             # print ('len of current batch:' + str(len(board_states[s_index:e_index])))
 
-            self.model.train(board_states[s_index:e_index], training_y[s_index:e_index], steps=self.train_iter)
+            self.model.train(training_x[s_index:e_index], training_y[s_index:e_index], steps=self.train_iter)
 
             batch_number += 1
 
         s_index = batch_number*batch_size
-        self.model.train(board_states[s_index:], training_y[s_index:], steps=self.train_iter)
+        self.model.train(training_x[s_index:], training_y[s_index:], steps=self.train_iter)
 
     def new_game(self):
         self.reset_board()

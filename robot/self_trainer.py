@@ -1,6 +1,7 @@
 from go_core.goboard import GoBoard
 # from network.tensor_model import TensorModel
 from robot.simple_robot import SimpleRobot
+from global_config.config import Config
 
 import time
 import random
@@ -127,11 +128,11 @@ class SelfTrainer(object):
             return both_pass, black_score, board_states, move_sequence, score_board
 
 
-    def self_train(self, iter_number = 10):
+    def self_train(self):
 
         self.reset_statistic()
 
-        while self.student_upgrade_times < iter_number and self.teacher_upgrade_times < iter_number:
+        while self.student_upgrade_times < Config.steps and self.teacher_upgrade_times < Config.steps:
 
             self.train_iter = self.train_iter + 1
 
