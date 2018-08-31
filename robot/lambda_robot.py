@@ -10,7 +10,7 @@ import random
 
 class LambdaRobot(object):
 
-    def __init__(self, name='DefaultLambdaRobot', old_model=None):
+    def __init__(self, name='DefaultLambdaRobot', old_model=None, is_debug_target=False):
         self.name = 'Lambda_' + name
         self.layer_number = Config.layer_number
 
@@ -24,7 +24,9 @@ class LambdaRobot(object):
 
         self.train_iter = Config.train_iter
 
-        self.go_board = LambdaGoBoard(self.board_size)
+        self.is_debug_target = is_debug_target
+
+        self.go_board = LambdaGoBoard(self.board_size, self.is_debug_target)
 
         self.model = SimpleModel(self.name, self.board_size, layer_number=self.layer_number)
 
@@ -121,6 +123,13 @@ class LambdaRobot(object):
         # print('# time used for prediction:' + str(end_time - start_time) + '         ')
 
         move_and_predict = zip(input_pos, predict_result)
+
+        if Config.is_debug:
+            self.go_board.debug_value = np.zeros((self.board_size, self.board_size), dtype=float)
+            for each_move_and_predict in move_and_predict:
+                if each_move_and_predict[0] is not None:
+                    (row,col) = each_move_and_predict[0]
+                    self.go_board.debug_value[row][col] = each_move_and_predict[1]
 
         color_value = self.go_board.get_color_value(color)
 
@@ -400,7 +409,7 @@ class LambdaRobot(object):
         return self.go_board.score_board
 
     def reset(self):
-        self.go_board = LambdaGoBoard(self.board_size)
+        self.go_board = LambdaGoBoard(self.board_size, self.is_debug_target)
         self.move_record = []
         self.in_repeat_checking = False
         self.repeat_check_move = None

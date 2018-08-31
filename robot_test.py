@@ -16,7 +16,7 @@ def start_self_train(robot='SimpleRobot', old_model=None):
             student_model = MCTSRobot(name='Student') #, layer_number=res_layer_number, board_size=board_size, komi=komi)
         elif robot == 'LambdaRobot':
             teacher_model = LambdaRobot(name='Teacher') #, layer_number=res_layer_number, board_size=board_size, komi=komi, train_iter=train_iter)
-            student_model = LambdaRobot(name='Student') #, layer_number=res_layer_number, board_size=board_size, komi=komi, train_iter=train_iter)
+            student_model = LambdaRobot(name='Student', is_debug_target=True) #, layer_number=res_layer_number, board_size=board_size, komi=komi, train_iter=train_iter)
         else: # 'SimpleRobot':
             teacher_model = SimpleRobot(name='Teacher') #, layer_number=res_layer_number, board_size=board_size, komi=komi, train_iter=train_iter)
             student_model = SimpleRobot(name='Student') #, layer_number=res_layer_number, board_size=board_size, komi=komi, train_iter=train_iter)
@@ -28,7 +28,7 @@ def start_self_train(robot='SimpleRobot', old_model=None):
             student_model = MCTSRobot(name='Student', old_model=old_model)
         elif robot == 'LambdaRobot':
             teacher_model = LambdaRobot(name='Teacher', old_model=old_model)
-            student_model = LambdaRobot(name='Student', old_model=old_model)    
+            student_model = LambdaRobot(name='Student', old_model=old_model, is_debug_target=True)    
         else: # 'SimpleRobot':
             teacher_model = SimpleRobot(name='Teacher', old_model=old_model)
             student_model = SimpleRobot(name='Student', old_model=old_model)

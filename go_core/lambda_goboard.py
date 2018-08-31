@@ -56,8 +56,9 @@ class LambdaGoBoard(object):
 
     MaxMoveNumber = 2048
 
-    def __init__(self, board_size=19):
+    def __init__(self, board_size=19, is_debug_target=False):
         self.reset(board_size)
+        self.is_debug_target = is_debug_target
 
     def reset(self, board_size): 
         self.board_size = board_size
@@ -73,6 +74,8 @@ class LambdaGoBoard(object):
 
         self.score_board = np.zeros((self.board_size, self.board_size), dtype=int)
         self.score_marker = np.zeros((self.board_size, self.board_size), dtype=int)
+
+        self.debug_value = np.zeros((self.board_size, self.board_size), dtype=float)
 
         self.empty_pos = set()
         # self.black_pos = set()
@@ -861,6 +864,81 @@ class LambdaGoBoard(object):
         
         return result
 
+    def get_debug_string(self):
+
+        result = '# Debug GoBoard\n'
+        row_string = '#      '
+        char_string = 'A B C D E F G H J K L M N O P Q R S T '
+        row_char_string = char_string[0:self.board_size*2]
+
+        row_string = row_string + row_char_string + '\n'
+        
+        result =  result + row_string
+        
+        for i in range(self.board_size - 1, -1, -1):
+            line_number = '  ' + str(i+1) + '   '
+            line = '# ' + line_number[-5:]
+            for j in range(0, self.board_size):
+                if self.output_board[i][j] == self.ColorBlack:
+                    line = line + '\033[1;31mx\033[0m'
+                if self.output_board[i][j] == self.ColorWhite:
+                    line = line + '\033[1;32mo\033[0m'
+                if self.output_board[i][j] == self.ColorEmpty:
+                    if self.score_board[i][j] == self.ColorBlack:
+                        line = line + '\033[1;31m*\033[0m'
+                    elif self.score_board[i][j] == self.ColorWhite:
+                        line = line + '\033[1;32m*\033[0m'
+                    else:
+                        line = line + '.'
+
+                line = line + ' '
+
+            line = line + line_number[:4]
+
+            line = line + '  |      '
+            for j in range(0, self.board_size):
+                # if self.output_board[i][j] == self.ColorBlack:
+                #     line = line + '\033[1;31mx\033[0m'
+                # if self.output_board[i][j] == self.ColorWhite:
+                #     line = line + '\033[1;32mo\033[0m'
+                # if self.output_board[i][j] == self.ColorEmpty:
+                #     if self.score_board[i][j] == self.ColorBlack:
+                #         line = line + '\033[1;31m*\033[0m'
+                #     elif self.score_board[i][j] == self.ColorWhite:
+                #         line = line + '\033[1;32m*\033[0m'
+                #     else:
+                #         line = line + '.'
+
+                line = line + (str(self.debug_value[i][j]) + '   ')[0:4]
+
+                line = line + ' '
+
+
+
+            result = result + line + '\n'
+
+        result = result + row_string
+
+        score_string = '#'
+
+        if self.score_board_updated:
+            total_score_string = ' ' + str(self.score) + '       '
+            black_score_string = ' ' + str(self.black_score) + '       '
+            white_score_string = ' ' + str(self.white_score) + '       '
+
+            score_string = score_string + 'Score:' + total_score_string[0:6]
+            score_string = score_string + 'B:' + black_score_string[0:5]
+            score_string = score_string + 'W:' + white_score_string[0:5]
+            score_string = score_string + '\n'
+            
+        else:
+
+            score_string = score_string + ' Score: NotCounted,  Black: NotCounted, White: NotCounted\n' 
+        
+        result = result + score_string
+
+        return result
+
     def get_score_debug_string(self):
 
         result = '# GoBoard\n'
@@ -899,13 +977,13 @@ class LambdaGoBoard(object):
         score_string = '#'
 
         if self.score_board_updated:
-            total_score_string = '          ' + str(self.score) + '       '
-            # black_score_string = '          ' + str(self.score_board_sum_black) + '       '
-            # white_score_string = '          ' + str(self.score_board_sum_white) + '       '
+            total_score_string = ' ' + str(self.score) + '       '
+            black_score_string = ' ' + str(self.black_score) + '       '
+            white_score_string = ' ' + str(self.white_score) + '       '
 
-            score_string = score_string + ' Score: ' + total_score_string[-11:]
-            # score_string = score_string + ',  Black: ' + black_score_string[-11:]
-            # score_string = score_string + ', White: ' + white_score_string[-11:]
+            score_string = score_string + 'Score:' + total_score_string[0:6]
+            score_string = score_string + 'B:' + black_score_string[0:5]
+            score_string = score_string + 'W:' + white_score_string[0:5]
             score_string = score_string + '\n'
             
         else:
@@ -1091,7 +1169,13 @@ class LambdaGoBoard(object):
         
         # result = result + self.get_standard_debug_string()
 
-        result = result + self.get_score_debug_string()
+        if Config.is_debug:
+            if self.is_debug_target:
+                result = result = self.get_debug_string()
+            else:
+                result = result + self.get_score_debug_string()
+        else:
+            result = result + self.get_score_debug_string()
         
         # result = result + self.get_border_debug_string()
 
