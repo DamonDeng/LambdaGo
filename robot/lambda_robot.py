@@ -1,5 +1,6 @@
 from go_core.lambda_goboard import LambdaGoBoard
-from network.simple_model import SimpleModel
+# from network.simple_model import SimpleModel
+from network.second_model import SecondModel
 from global_config.config import Config
 
 import numpy as np
@@ -28,7 +29,7 @@ class LambdaRobot(object):
 
         self.go_board = LambdaGoBoard(self.board_size, self.is_debug_target)
 
-        self.model = SimpleModel(self.name, self.board_size, layer_number=self.layer_number)
+        self.model = SecondModel(self.name, self.board_size, layer_number=self.layer_number)
 
         self.move_record = []
         self.in_repeat_checking = False
@@ -335,9 +336,74 @@ class LambdaRobot(object):
 
 
 
-    
+    def train(self, board_states, move_sequence, score_board, score):
+        self.second_train(board_states, move_sequence, score_board, score)
+
+    def second_train(self, board_states, move_sequence, score_board, score):
+        print (' Starting to train the second_model:' + self.name)
+
+        training_length = len(board_states)
+
+        # print (' training length:' + str(training_length))
+        # print (' score board is: ' + str(score_board))
+
+        training_x = []
+        training_y = []
+
+        if score > Config.komi:
+            training_y_value = 1
+        else:
+            training_y_value = -1
+
+        # score_board_90 = np.rot90(score_board)
+        # score_board_180 = np.rot90(score_board_90)
+        # score_board_270 = np.rot90(score_board_180)
+
+        for each_state in board_states:
+            each_state_90 = np.rot90(each_state)
+            each_state_180 = np.rot90(each_state_90)
+            each_state_270 = np.rot90(each_state_180)
+            
+            training_x.append(each_state)
+            training_y.append(training_y_value)
+
+            training_x.append(each_state_90)
+            training_y.append(training_y_value)
+
+            training_x.append(each_state_180)
+            training_y.append(training_y_value)
+
+            training_x.append(each_state_270)
+            training_y.append(training_y_value)
+
+
+
         
-    def train(self, board_states, move_sequence, score_board):
+
+        # set the batch_size to half of the max stone number
+        # to make sure that the model can be train only if the robot can be used to play.
+
+        batch_size = self.board_size*self.board_size/2
+        total_train_sample = len(training_x)
+
+        batch_number = 0
+
+        while (batch_number+1)*batch_size < total_train_sample:
+
+            s_index = batch_number*batch_size
+            e_index = (batch_number+1)*batch_size
+
+            # print ('len of current batch:' + str(len(board_states[s_index:e_index])))
+
+            self.model.train(training_x[s_index:e_index], training_y[s_index:e_index], train_iter=self.train_iter)
+
+            batch_number += 1
+
+        s_index = batch_number*batch_size
+        self.model.train(training_x[s_index:], training_y[s_index:], train_iter=self.train_iter)
+
+
+    def simple_train(self, board_states, move_sequence, score_board):
         print (' Starting to train the model:' + self.name)
 
         training_length = len(board_states)
@@ -388,12 +454,12 @@ class LambdaRobot(object):
 
             # print ('len of current batch:' + str(len(board_states[s_index:e_index])))
 
-            self.model.train(training_x[s_index:e_index], training_y[s_index:e_index], steps=self.train_iter)
+            self.model.train(training_x[s_index:e_index], training_y[s_index:e_index], train_iter=self.train_iter)
 
             batch_number += 1
 
         s_index = batch_number*batch_size
-        self.model.train(training_x[s_index:], training_y[s_index:], steps=self.train_iter)
+        self.model.train(training_x[s_index:], training_y[s_index:], train_iter=self.train_iter)
 
     def new_game(self):
         self.reset_board()

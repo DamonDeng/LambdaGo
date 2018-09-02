@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
-class SimpleModel(object):
+class SecondModel(object):
 
     def __init__(self, name='DefaultModel', board_size=19, model_path=None, layer_number=19):
         self.board_size = board_size
@@ -44,7 +44,7 @@ class SimpleModel(object):
         print('# trying to define model in name scope:' + self.name)
 
         reshaped_input_x = tf.reshape(input_x, [-1, self.board_size, self.board_size, 1])
-        reshaped_input_y = tf.reshape(input_y, [-1, self.board_size, self.board_size, 1])
+        reshaped_input_y = tf.reshape(input_y, [-1, 1])
 
         with tf.name_scope(self.name) as name_scope:
             # shape: [None,19,19,1]
@@ -58,8 +58,8 @@ class SimpleModel(object):
                 name = name_scope + 'conv1')
             # shape: [None,19,19,256]
 
-            print ('----')
-            print (conv1.name)
+            # print ('----')
+            # print (conv1.name)
 
             # short_cut = conv1 + reshaped_input_x
 
@@ -93,14 +93,24 @@ class SimpleModel(object):
                 name = name_scope + 'last_conv')
             # shape: [None,19,19,1]
 
-            loss = tf.reduce_mean(tf.squared_difference(last_conv, reshaped_input_y))
-            sum_result = tf.reduce_sum(last_conv, [1,2,3])
+            flatten_layer = tf.contrib.layers.flatten(last_conv)
 
-            round_result = tf.round(last_conv)
+            move_number = self.board_size*self.board_size+1
+
+            fully_connected = tf.layers.dense(inputs=flatten_layer, units=move_number, activation=tf.nn.tanh)
+           
+            fully_connected_output = tf.layers.dense(inputs=fully_connected, units=1, activation=tf.nn.tanh)
+
+            sum_output = tf.reduce_sum(fully_connected_output, 1)
+
+            loss = tf.reduce_mean(tf.squared_difference(fully_connected_output, reshaped_input_y))
+            # sum_result = tf.reduce_sum(last_conv, [1,2,3])
+
+            # round_result = tf.round(last_conv)
 
             # sum_result = tf.reduce_sum(round_result, [1,2,3])
 
-        return sum_result, loss
+        return sum_output, loss
 
     def predict(self, input_data):
 

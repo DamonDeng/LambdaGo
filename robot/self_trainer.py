@@ -156,8 +156,8 @@ class SelfTrainer(object):
                     winner_string = 'White'
 
                 print ('# Both pass, '+winner_string+' win, trying to train.')
-                self.student.train(board_states, move_sequence, score_board)
-                self.teacher.train(board_states, move_sequence, score_board)
+                self.student.train(board_states, move_sequence, score_board, score)
+                self.teacher.train(board_states, move_sequence, score_board, score)
                 
             else:
                 print ('# reach max move, ignore this game')
@@ -189,8 +189,8 @@ class SelfTrainer(object):
                     winner_string = 'White'
 
                 print ('# Both pass, '+winner_string+' win, trying to train.')
-                self.student.train(board_states, move_sequence, score_board)
-                self.teacher.train(board_states, move_sequence, score_board)
+                self.student.train(board_states, move_sequence, score_board, score)
+                self.teacher.train(board_states, move_sequence, score_board, score)
             else:
                 print ('# reach max move, ignore this game')
 
