@@ -50,7 +50,7 @@ class SecondModel(object):
             # shape: [None,19,19,1]
             conv1 = tf.layers.conv2d(
                 inputs=reshaped_input_x,
-                filters=256,
+                filters=32,
                 kernel_size=[3, 3],
                 padding="same",
                 # activation=tf.nn.relu,
@@ -71,7 +71,7 @@ class SecondModel(object):
 
                 conv_in = tf.layers.conv2d(
                     inputs=short_cut,
-                    filters=256,
+                    filters=32,
                     kernel_size=[3, 3],
                     padding="same",
                     # activation=tf.nn.relu,
